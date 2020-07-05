@@ -7,11 +7,11 @@ from sklearn.linear_model import ElasticNet, Ridge, Lasso
 class SLIM():
     
     
-    def __init__(self, alpha, user_num, item_num, lin_model='lasso',):
+    def __init__(self, alpha, l1_ratio, user_num, item_num, lin_model='lasso',):
         if lin_model == 'lasso':
             self.reg = Lasso(alpha=alpha, positive=True)
         elif lin_model == 'elastic':
-            self.reg = ElasticNet(alpha=alpha, positive=True)
+            self.reg = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, positive=True)
             
         self.user_num = user_num
         self.item_num = item_num
