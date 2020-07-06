@@ -35,7 +35,7 @@ class Evaluater():
                     not_count += 1
                     continue
 
-                pred = torch.tensor([])
+                pred = torch.tensor([], device=device)
                 for j in range(int(len(self.dataset.item_list) / batch_size) + 1):
                     # modelにuser,itemを入力
                     # batchでやると速い
@@ -56,7 +56,7 @@ class Evaluater():
                 # 予測をソート
                 ### item_idxは0~len(item_list)-1 なのでこれでOK
                 ### item_idxがentity_listの途中から始まっている場合は別
-                sorted_idx = np.argsort(np.array(pred))[::-1]
+                sorted_idx = np.argsort(np.array(pred.cpu()))[::-1]
 
                 topn_idx = sorted_idx[:n]
                 hit = len(set(topn_idx) & set(self.dataset.user_items_test_dict[i]))
