@@ -111,7 +111,7 @@ class TrainIterater():
             if (i+1) % eval_every == 0:
                 score = eval_model.topn_precision(model)
                 plot_score_list.append(score)
-                print('epoch: {}  precision: {}'.format(i, score))
+                #print('epoch: {}  precision: {}'.format(i, score))
         
         self._plot(plot_loss_list)
         self._plot(plot_score_list)

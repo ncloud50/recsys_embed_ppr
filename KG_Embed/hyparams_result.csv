@@ -1,0 +1,2 @@
+,number,value,datetime_start,datetime_complete,duration,params_batch_size,params_embedding_dim,params_lr,params_lr_decay_every,params_lr_decay_rate,params_warmup,params_weight_decay,state
+0,0,,2020-07-05 10:03:26.089744,,,128,80.0,0.00014793946629615203,9,0.6291237681180413,394,0.005841702485501142,RUNNING

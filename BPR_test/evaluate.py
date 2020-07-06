@@ -34,7 +34,7 @@ class Evaluater():
                     not_count += 1
                     continue
 
-                pred = torch.tensor([])
+                pred = torch.tensor([], device=device)
                 for j in range(int(len(self.dataset.item_list) / batch_size) + 1):
                     # modelにuser,itemを入力
                     # batchでやると速い
@@ -49,7 +49,7 @@ class Evaluater():
                     pred = torch.cat([pred, model.predict(user_tensor, item_tensor)])
 
                 # 予測をソート
-                sorted_idx = np.argsort(np.array(pred))[::-1]
+                sorted_idx = np.argsort(np.array(pred.cpu()))[::-1]
 
                 # topnにtarget userの推薦アイテムがいくつ含まれているか
                 topn_idx = sorted_idx[:n]
