@@ -35,7 +35,7 @@ class TrainIterater():
             pred = model(h_entity_tensor, t_entity_tensor, relation_tensor)
             loss = loss_func(pred, y_train)
 
-        elif self.model_name == 'TransE':
+        elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
             posi_batch, nega_batch = batch
             h = torch.tensor(posi_batch[:, 0], dtype=torch.long, device=device)
             t = torch.tensor(posi_batch[:, 1], dtype=torch.long, device=device)
@@ -67,7 +67,7 @@ class TrainIterater():
 
         if self.model_name == 'DistMulti':
             train_num = len(self.dataset.triplet_df) + len(self.dataset.nega_triplet_df)
-        elif self.model_name == 'TransE':
+        elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
             train_num = len(self.dataset.triplet_df)
 
         start_time = time.time()

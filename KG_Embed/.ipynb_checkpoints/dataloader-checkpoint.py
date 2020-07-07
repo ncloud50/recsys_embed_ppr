@@ -18,7 +18,7 @@ class AmazonDataset:
         self.load_user_items_dict()
 
         # TransEの時だけ使う辞書
-        if model_name == 'TransE':
+        if model_name == 'TransE' or model_name == 'SparseTransE':
             self.relation_aggregate(self.nega_triplet_df)
 
 
@@ -75,7 +75,7 @@ class AmazonDataset:
         
             return batch, batch_y_train
 
-        elif self.model_name == 'TransE':
+        elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
             batch_idx = np.random.permutation(len(self.triplet_df))[:batch_size]
             posi_batch = self.triplet_df.values[batch_idx]
             nega_batch = self.get_nega_batch(posi_batch[:, 2])

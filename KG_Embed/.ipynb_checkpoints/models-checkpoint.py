@@ -91,7 +91,7 @@ class TransE(nn.Module):
 class SparseTransE(nn.Module):
 
     def __init__(self, embedding_dim, relation_size, entity_size, gamma=1, alpha=1e-4):
-        super(TransE, self).__init__()
+        super(SparseTransE, self).__init__()
         self.embedding_dim = embedding_dim
 
         self.entity_embed = nn.Embedding(entity_size, embedding_dim)
@@ -124,6 +124,10 @@ class SparseTransE(nn.Module):
         n_r = n_r / torch.norm(n_r, dim=1).view(batch_size, -1)
 
         score = self.gamma + torch.norm((h + r - t), dim=1) - torch.norm((n_h + n_r - n_t), dim=1)
+        
+        # 正則化
+        score = score + torch.sum(torch.mm(h, h.T) +\
+                                  torch.mm(t, t.T) + torch.mm(n_h, n_h.T) + torch.mm(n_t, n_t.T))
         
         return score
     
