@@ -87,3 +87,61 @@ class TransE(nn.Module):
 
         return pred
     
+    
+class SparseTransE(nn.Module):
+
+    def __init__(self, embedding_dim, relation_size, entity_size, gamma=1, alpha=1e-4):
+        super(TransE, self).__init__()
+        self.embedding_dim = embedding_dim
+
+        self.entity_embed = nn.Embedding(entity_size, embedding_dim)
+        self.relation_embed = nn.Embedding(relation_size, embedding_dim)
+        # model para init(normalize)
+
+        # margin para
+        self.gamma = gamma
+        
+        # 正則化パラメータ
+        self.alpha = alpha
+        
+        
+    def forward(self, head, tail, relation, n_head, n_tail, n_relation):
+
+        h = self.entity_embed(head)
+        t = self.entity_embed(tail)
+        r = self.relation_embed(relation)
+        n_h = self.entity_embed(n_head)
+        n_t = self.entity_embed(n_tail)
+        n_r = self.relation_embed(n_relation)
+
+        batch_size = h.shape[0]
+        # normalize
+        h = h / torch.norm(h, dim=1).view(batch_size, -1)
+        t = t / torch.norm(t, dim=1).view(batch_size, -1)
+        r = r / torch.norm(r, dim=1).view(batch_size, -1)
+        n_h = n_h / torch.norm(n_h, dim=1).view(batch_size, -1)
+        n_t = n_t / torch.norm(n_t, dim=1).view(batch_size, -1)
+        n_r = n_r / torch.norm(n_r, dim=1).view(batch_size, -1)
+
+        score = self.gamma + torch.norm((h + r - t), dim=1) - torch.norm((n_h + n_r - n_t), dim=1)
+        
+        # 正則化
+        score = score + torch.sum(torch.mm(h, h.T) + torch.mm(t, t.T) + torch.mm(h, h.T)
+        
+        return score
+    
+    def predict(self, head, tail, relation):
+        h = self.entity_embed(head)
+        t = self.entity_embed(tail)
+        r = self.relation_embed(relation)
+
+        batch_size = h.shape[0]
+        # normalize
+        h /= torch.norm(h, dim=1).view(batch_size, -1)
+        t /= torch.norm(t, dim=1).view(batch_size, -1)
+        r /= torch.norm(r, dim=1).view(batch_size, -1)
+
+        pred =  -1 * torch.norm((h + r - t), dim=1)
+
+        return pred
+    
