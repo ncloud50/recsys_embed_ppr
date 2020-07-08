@@ -35,7 +35,7 @@ class TrainIterater():
             pred = model(h_entity_tensor, t_entity_tensor, relation_tensor)
             loss = loss_func(pred, y_train)
 
-        elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
+        elif self.model_name == 'TransE':
             posi_batch, nega_batch = batch
             h = torch.tensor(posi_batch[:, 0], dtype=torch.long, device=device)
             t = torch.tensor(posi_batch[:, 1], dtype=torch.long, device=device)
@@ -47,6 +47,27 @@ class TrainIterater():
 
             pred = model(h, t, r, n_h, n_t, n_r)
             loss = torch.sum(pred)
+
+        elif self.model_name == 'SparseTransE':
+            posi_batch, nega_batch, batch_user, batch_item, batch_brand = batch
+            h = torch.tensor(posi_batch[:, 0], dtype=torch.long, device=device)
+            t = torch.tensor(posi_batch[:, 1], dtype=torch.long, device=device)
+            r = torch.tensor(posi_batch[:, 2], dtype=torch.long, device=device)
+
+            n_h = torch.tensor(nega_batch[:, 0], dtype=torch.long, device=device)
+            n_t = torch.tensor(nega_batch[:, 1], dtype=torch.long, device=device)
+            n_r = torch.tensor(nega_batch[:, 2], dtype=torch.long, device=device)
+
+            reg_user = torch.tensor(batch_user, dtype=torch.long, device=device)
+            reg_item = torch.tensor(batch_item, dtype=torch.long, device=device)
+            reg_brand = torch.tensor(batch_brand, dtype=torch.long, device=device)
+
+            pred = model(h, t, r, n_h, n_t, n_r,
+                         reg_user, reg_item, reg_brand)
+
+            loss = torch.sum(pred)
+
+
 
         loss.backward()
         optimizer.step()
@@ -73,13 +94,11 @@ class TrainIterater():
         start_time = time.time()
         
         for i in range(int(train_num / self.batch_size) + 1):
+            
             batch = self.dataset.get_batch(batch_size=self.batch_size)
-
             loss = self.train(batch, loss_func, optimizer, model)
-
             print_loss_total += loss
             plot_loss_total += loss
-
 
             # print_everyごとに現在の平均のlossと、時間、dataset全体に対する進捗(%)を出力
             if (i+1) % print_every == 0:
@@ -114,7 +133,7 @@ class TrainIterater():
         plot_score_list = []
                           
         for i in range(epoch):
-            plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay, print_every=1e+5))
+            plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay, print_every=50))
             
             # lrスケジューリング
             if i > warmup:
@@ -130,6 +149,7 @@ class TrainIterater():
         self._plot(plot_score_list)
         
         return eval_model.topn_precision(model)
+
 
     def _plot(self, loss_list):
         # ここもっとちゃんと書く

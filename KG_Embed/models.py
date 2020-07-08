@@ -105,7 +105,8 @@ class SparseTransE(nn.Module):
         self.alpha = alpha
         
         
-    def forward(self, head, tail, relation, n_head, n_tail, n_relation):
+    def forward(self, head, tail, relation, n_head, n_tail, n_relation, 
+                reg_user, reg_item, reg_brand):
 
         h = self.entity_embed(head)
         t = self.entity_embed(tail)
@@ -126,8 +127,20 @@ class SparseTransE(nn.Module):
         score = self.gamma + torch.norm((h + r - t), dim=1) - torch.norm((n_h + n_r - n_t), dim=1)
         
         # 正則化
-        score = score + torch.sum(torch.mm(h, h.T) +\
-                                  torch.mm(t, t.T) + torch.mm(n_h, n_h.T) + torch.mm(n_t, n_t.T))
+        reg_u = self.entity_embed(reg_user)
+        reg_i = self.entity_embed(reg_item)
+        if len(reg_brand) == 0:
+            reg_b = torch.zeros(2, 2)
+        else:
+            reg_b = self.entity_embed(reg_brand)
+        
+        #print(reg_u.shape)
+        #print(reg_i.shape)
+        #print(reg_b.shape)
+        reg = torch.sum(torch.mm(reg_u, reg_u.T)) + torch.sum(torch.mm(reg_i, reg_i.T)) \
+            + torch.sum(torch.mm(reg_b, reg_b.T))
+
+        score = score + self.alpha * reg
         
         return score
     
