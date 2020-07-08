@@ -133,7 +133,7 @@ class TrainIterater():
         plot_score_list = []
                           
         for i in range(epoch):
-            plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay, print_every=50))
+            plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay, print_every=1e+5))
             
             # lrスケジューリング
             if i > warmup:
