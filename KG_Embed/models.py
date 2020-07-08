@@ -137,8 +137,8 @@ class SparseTransE(nn.Module):
         #print(reg_u.shape)
         #print(reg_i.shape)
         #print(reg_b.shape)
-        reg = torch.sum(torch.mm(reg_u, reg_u.T)) + torch.sum(torch.mm(reg_i, reg_i.T)) \
-            + torch.sum(torch.mm(reg_b, reg_b.T))
+        reg = torch.norm(torch.mm(reg_u, reg_u.T)) + torch.norm(torch.mm(reg_i, reg_i.T)) \
+            + torch.norm(torch.mm(reg_b, reg_b.T))
 
         score = score + self.alpha * reg
         
