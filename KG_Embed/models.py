@@ -133,10 +133,11 @@ class SparseTransE(nn.Module):
             reg_b = torch.zeros(2, 2)
         else:
             reg_b = self.entity_embed(reg_brand)
+
+        reg_u = reg_u / torch.norm(reg_u, dim=1).view(batch_size, -1)
+        reg_i = reg_i / torch.norm(reg_i, dim=1).view(batch_size, -1)
+        reg_b = reg_b / torch.norm(reg_b, dim=1).view(batch_size, -1)
         
-        #print(reg_u.shape)
-        #print(reg_i.shape)
-        #print(reg_b.shape)
         reg = torch.sum(torch.mm(reg_u, reg_u.T)) + torch.sum(torch.mm(reg_i, reg_i.T)) \
             + torch.sum(torch.mm(reg_b, reg_b.T))
 
