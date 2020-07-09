@@ -52,8 +52,8 @@ def objective(trial):
     lr_decay_every = 2
     lr_decay_rate = trial.suggest_uniform('lr_decay_rate', 0.5, 1)
     
-    score =iterater.iterate_epoch(model, lr=lr, epoch=100, weight_decay=weight_decay, warmup=warmup,
-                           lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1)
+    score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
+                           lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
@@ -62,7 +62,7 @@ def objective(trial):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./hyparams_result_no_item-item_relation.csv')
     with open('best_param_no_item-item_relation.pickle', 'wb') as f:
