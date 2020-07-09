@@ -48,7 +48,7 @@ class Evaluater():
                     if len(user_tensor) > len(item_tensor):
                         user_tensor = torch.tensor([i for k in range(len(item_tensor))],
                                                dtype=torch.long, device=device)
-                        relation_tensor = torch.tensor([1 for k in range(len(item_tensor))],
+                        relation_tensor = torch.tensor([0 for k in range(len(item_tensor))],
                                                        dtype=torch.long, device=device)
 
                     pred = torch.cat([pred, model.predict(user_tensor, item_tensor, relation_tensor)])
