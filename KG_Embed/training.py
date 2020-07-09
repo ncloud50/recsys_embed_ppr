@@ -15,9 +15,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TrainIterater():
 
 
-    def __init__(self, batch_size, model_name='DistMulti'):
+    def __init__(self, batch_size, data_dir, model_name='DistMulti'):
         #self.dataset = dataloader.AmazonDataset('./data')
-        self.dataset = AmazonDataset('./data', model_name=model_name)
+        #self.dataset = AmazonDataset('./data', model_name=model_name)
+        self.data_dir = data_dir
+        self.dataset = AmazonDataset(self.data_dir, model_name=model_name)
         self.batch_size = batch_size
         self.model_name = model_name
         
@@ -128,7 +130,7 @@ class TrainIterater():
                 
     def iterate_epoch(self, model, lr, epoch, weight_decay=0, 
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5):
-        eval_model = Evaluater(model_name=self.model_name)
+        eval_model = Evaluater(self.data_dir, model_name=self.model_name)
         plot_loss_list = []
         plot_score_list = []
                           

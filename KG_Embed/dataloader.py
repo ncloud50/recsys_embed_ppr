@@ -109,7 +109,13 @@ class AmazonDataset:
     def get_nega_batch(self, relations):
         nega_batch = []
         for rel in relations:
-            nega_triplet = self.relation_entity_dict[rel]
+            if rel in self.relation_entity_dict:
+                nega_triplet = self.relation_entity_dict[rel]
+            else:
+                head = np.random.randint(len(self.entity_list))
+                tail = np.random.randint(len(self.entity_list))
+                nega_batch.append([head, tail, rel])
+                continue
         
             # ここ直す
             if len(nega_triplet) == 0:

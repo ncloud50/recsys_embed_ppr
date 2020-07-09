@@ -15,8 +15,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Evaluater():
 
 
-    def __init__(self, model_name='DistMulti'):
-        self.dataset = AmazonDataset('./data', model_name=model_name)
+    def __init__(self, data_dir, model_name='DistMulti'):
+        self.dataset = AmazonDataset(data_dir, model_name=model_name)
         self.model_name = model_name
 
         
