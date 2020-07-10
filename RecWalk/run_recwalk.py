@@ -45,8 +45,8 @@ def train_SLIM(hyparam):
     l1_ratio = hyparam['l1_ratio']
     #lin_model = hyparam['lin_model']
     slim = SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model='elastic')
-    #slim.fit_multi(slim_train)
-    slim.load_sim_mat('./sim_mat.txt', slim_train)
+    slim.fit_multi(slim_train)
+    #slim.load_sim_mat('./sim_mat.txt', slim_train)
     #slim.save_sim_mat('./sim_mat.txt')
     return slim
 
