@@ -48,9 +48,9 @@ def train_SLIM(hyparam):
     l1_ratio = hyparam['l1_ratio']
     #lin_model = hyparam['lin_model']
     slim = SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model='elastic')
-    #slim.fit_multi(slim_train)
-    slim.load_sim_mat('./sim_mat.txt', slim_train)
-    #slim.save_sim_mat('./sim_mat.txt')
+    slim.fit_multi(slim_train)
+    #slim.load_sim_mat('./sim_mat.txt', slim_train)
+    slim.save_sim_mat('./sim_mat.txt')
     return slim
 
 # load network
@@ -191,12 +191,11 @@ def get_ranking_mat(slim, alpha=0.85, beta=0.01):
         sorted_idx = np.argsort(np.array(pred))[::-1]
         ranking_mat.append(sorted_idx)
 
-        count += 1
-        if count > 100:
-            break
+        #count += 1
+        #if count > 100:
+        #    break
             
     return ranking_mat
-
 
 
 def topn_precision(ranking_mat, user_items_dict, n=10):
@@ -243,7 +242,7 @@ def time_since(runtime):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    study.optimize(objective, n_trials=3)
+    study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./hyparams_result_no_item-item_relation.csv')
     # save best params 
