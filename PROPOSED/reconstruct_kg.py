@@ -132,9 +132,26 @@ def reconstruct_kg(model):
     print(i_i_b_mat.shape)
     print(i_i_v_mat.shape)
     print(i_b_mat.shape)
-    return u_i_mat, i_i_b_mat, i_i_v_mat, i_b_mat
+    u_i_mat = mat_to_graph(user_index, item_index, u_i_mat)
+    i_i_b_mat = mat_to_graph(item_index, item_index, i_i_b_mat)
+    i_i_v_mat = mat_to_graph(item_index, item_index, i_i_v_mat)
+    i_b_mat = mat_to_graph(item_index, brand_index, i_b_mat)
+
+    return u_i_mat + i_i_b_mat + i_i_v_mat + i_b_mat
 
             
+def mat_to_graph(row_idx, col_idx, mat):
+    row_new = []
+    col_new = []
+    data = []
+    for i in range(len(row_idx)):
+        for j in range(len(col_idx)):
+            row_new.append(row_idx[i])
+            col_new.append(col_idx[j])
+            data.append(mat[i, j])
+
+    size = len(dataset.entity_list)
+    return scipy.sparse.csr_matrix((data, (row_new, col_new)), shape=(size, size))
 
 
 
@@ -148,5 +165,6 @@ if __name__ == '__main__':
     entity_size = len(dataset.entity_list)
     model = TransE(int(embedding_dim), relation_size, entity_size).to(device)
 
-    print(dataset.brand_list)
-    reconstruct_kg(model)
+    re_kg = reconstruct_kg(model)
+    print(re_kg.shape)
+    print(type(re_kg))
