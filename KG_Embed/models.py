@@ -127,8 +127,16 @@ class SparseTransE(nn.Module):
         score = self.gamma + torch.norm((h + r - t), dim=1) - torch.norm((n_h + n_r - n_t), dim=1)
         
         # 正則化
-        reg_u = self.entity_embed(reg_user)
-        reg_i = self.entity_embed(reg_item)
+        if len(reg_user) == 0:
+            reg_u = torch.zeros(2, 2)
+        else:
+            reg_u = self.entity_embed(reg_user)
+
+        if len(reg_item) == 0:
+            reg_i = torch.zeros(2, 2)
+        else:
+            reg_i = self.entity_embed(reg_item)
+
         if len(reg_brand) == 0:
             reg_b = torch.zeros(2, 2)
         else:
