@@ -24,7 +24,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #model_name = 'TransE'
 
 model_name = 'SparseTransE'
-dataset = AmazonDataset('./data', model_name='SparseTransE')
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -33,6 +32,8 @@ def time_since(runtime):
 
 def objective(trial):
     start = time.time()
+    # データ読み込み
+    dataset = AmazonDataset('./data', model_name='SparseTransE')
     
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)

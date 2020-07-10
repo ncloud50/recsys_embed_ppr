@@ -23,7 +23,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # kg embed model
 
 model_name = 'TransE'
-dataset = AmazonDataset('./data2', model_name='TransE')
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -32,6 +31,9 @@ def time_since(runtime):
 
 def objective(trial):
     start = time.time()
+
+    # dataload
+    dataset = AmazonDataset('./data2', model_name='TransE')
     
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
