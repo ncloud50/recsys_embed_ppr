@@ -33,6 +33,9 @@ with open('./data2/entity_list.txt', 'r') as f:
     for l in f:
         entity_list.append(l.replace('\n', ''))
 
+
+user_items_test_dict = pickle.load(open('./data2/user_items_test_dict.pickle', 'rb'))
+
 # SLIMのハイパラをロードする
 slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
 
@@ -45,8 +48,8 @@ def train_SLIM(hyparam):
     l1_ratio = hyparam['l1_ratio']
     #lin_model = hyparam['lin_model']
     slim = SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model='elastic')
-    slim.fit_multi(slim_train)
-    #slim.load_sim_mat('./sim_mat.txt', slim_train)
+    #slim.fit_multi(slim_train)
+    slim.load_sim_mat('./sim_mat.txt', slim_train)
     #slim.save_sim_mat('./sim_mat.txt')
     return slim
 
@@ -77,7 +80,7 @@ def pagerank_scipy(G, sim_mat, alpha=0.85, beta=0.01, personalization=None,
                    max_iter=500, tol=1.0e-6, weight='weight',
                    dangling=None):
     
-    import scipy.sparse
+    #import scipy.sparse
 
     N = len(G)
     if N == 0:
@@ -150,7 +153,6 @@ def pagerank_scipy(G, sim_mat, alpha=0.85, beta=0.01, personalization=None,
 
 
 
-user_idx = [entity_list.index(u) for u in user_list]
 
 def item_ppr(sim_mat, user, alpha, beta):
     val = np.zeros(len(G.nodes()))
@@ -178,26 +180,27 @@ def item_ppr(sim_mat, user, alpha, beta):
 
 
 def get_ranking_mat(slim, alpha=0.85, beta=0.01):
+    user_idx = [entity_list.index(u) for u in user_list]
     ranking_mat = []
     count = 0
     sim_mat = mk_sparse_sim_mat(G, slim.sim_mat)
+    count = 0
     for u in user_idx:
         pred = item_ppr(sim_mat, u, alpha, beta)
-        #print(pred)
+        #print(pred[0:5])
         sorted_idx = np.argsort(np.array(pred))[::-1]
         ranking_mat.append(sorted_idx)
-        
-        #count += 1
-        #if count > 100:
-        #    break
+
+        count += 1
+        if count > 100:
+            break
             
     return ranking_mat
 
 
-user_idx = [entity_list.index(u) for u in user_list]
-user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
 
 def topn_precision(ranking_mat, user_items_dict, n=10):
+    user_idx = [entity_list.index(u) for u in user_list]
     not_count = 0
     precision_sum = 0
         
@@ -240,7 +243,7 @@ def time_since(runtime):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    study.optimize(objective, n_trials=20)
+    study.optimize(objective, n_trials=3)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./hyparams_result_no_item-item_relation.csv')
     # save best params 
