@@ -16,25 +16,25 @@ warnings.filterwarnings('ignore')
 
 
 # dataload
-slim_train = pd.read_csv('./data2/user_item_train_slim.csv')
-triplet_df = pd.read_csv('./data2/triplet.csv')
+slim_train = pd.read_csv('./data/user_item_train_slim.csv')
+triplet_df = pd.read_csv('./data/triplet.csv')
 edges = [[r[0], r[1]] for r in triplet_df.values]
 
 user_list = []
 item_list = []
 entity_list = []
-with open('./data2/user_list.txt', 'r') as f:
+with open('./data/user_list.txt', 'r') as f:
     for l in f:
         user_list.append(l.replace('\n', ''))
-with open('./data2/item_list.txt', 'r') as f:
+with open('./data/item_list.txt', 'r') as f:
     for l in f:
         item_list.append(l.replace('\n', ''))
-with open('./data2/entity_list.txt', 'r') as f:
+with open('./data/entity_list.txt', 'r') as f:
     for l in f:
         entity_list.append(l.replace('\n', ''))
 
 
-user_items_test_dict = pickle.load(open('./data2/user_items_test_dict.pickle', 'rb'))
+user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
 
 # SLIMのハイパラをロードする
 slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
@@ -48,8 +48,8 @@ def train_SLIM(hyparam):
     l1_ratio = hyparam['l1_ratio']
     #lin_model = hyparam['lin_model']
     slim = SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model='elastic')
-    #slim.fit_multi(slim_train)
-    slim.load_sim_mat('./sim_mat.txt', slim_train)
+    slim.fit_multi(slim_train)
+    #slim.load_sim_mat('./sim_mat.txt', slim_train)
     #slim.save_sim_mat('./sim_mat.txt')
     return slim
 
@@ -248,9 +248,9 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result_no_item-item_relation.csv')
+    df.to_csv('./hyparams_result2.csv')
     # save best params 
-    with open('best_param_no_item-item_relation.pickle', 'wb') as f:
+    with open('best_param2.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
     
 
