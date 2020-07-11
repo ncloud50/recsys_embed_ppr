@@ -248,9 +248,9 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result2.csv')
+    df.to_csv('./hyparams_result4.csv')
     # save best params 
-    with open('best_param2.pickle', 'wb') as f:
+    with open('best_param4.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
     
 

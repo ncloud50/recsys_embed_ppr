@@ -322,8 +322,8 @@ def item_ppr(sim_mat, alpha, beta):
 def get_ranking_mat(model, gamma, alpha=0.85, beta=0.01):
     ranking_mat = []
     sim_mat = reconstruct_kg(model)
-    #sim_mat = mk_sparse_sim_mat(model, gamma)
-    pred = item_ppr(sim_mat, alpha, beta)
+    sim_mat = mk_sparse_sim_mat(model, gamma)
+    #pred = item_ppr(sim_mat, alpha, beta)
     #print(pred.shape)
     for i in range(len(dataset.user_list)):
         sorted_idx = np.argsort(np.array(pred[i]))[::-1]
@@ -366,11 +366,10 @@ def objective(trial):
 
     alpha = trial.suggest_uniform('alpha', 0, 0.5)
     beta = trial.suggest_uniform('beta', 0, 0.5)
-    #gamma1 = trial.suggest_uniform('gamma1', 0, 1)
-    #gamma2 = trial.suggest_uniform('gamma2', 0, 1)
-    #gamma3 = trial.suggest_uniform('gamma3', 0, 1)
-    #gamma = [gamma1, gamma2, gamma3]
-    gamma = [1, 2, 3]
+    gamma1 = trial.suggest_uniform('gamma1', 0, 1)
+    gamma2 = trial.suggest_uniform('gamma2', 0, 1)
+    gamma3 = trial.suggest_uniform('gamma3', 0, 1)
+    gamma = [gamma1, gamma2, gamma3]
     
     ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
     score = topn_precision(ranking_mat, user_items_test_dict)
@@ -387,6 +386,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result_reconstruct.csv')
-    with open('best_param_reconstruct.pickle', 'wb') as f:
+    df.to_csv('./hyparams_result_gamma3.csv')
+    with open('best_param_gamma3.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
