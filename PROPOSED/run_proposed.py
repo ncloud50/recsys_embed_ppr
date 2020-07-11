@@ -198,7 +198,10 @@ def reconstruct_kg(model):
     i_b_mat = mat_to_graph(item_index, brand_index, i_b_mat)
 
     kg_mat = u_i_mat + i_i_b_mat + i_i_v_mat + i_b_mat
-    kg_mat = kg_mat / kg_mat.sum(axis=1)
+    col_sum = kg_mat.sum(axis=1)
+    col_sum[col_sum ==  0] = 1
+    kg_mat /= col_sum
+    kg_mat = scipy.sparse.csr_matrix(kg_mat)
 
     return kg_mat
 
@@ -368,10 +371,8 @@ def objective(trial):
     #gamma3 = trial.suggest_uniform('gamma3', 0, 1)
     #gamma = [gamma1, gamma2, gamma3]
     gamma = [1, 2, 3]
-    alpha = 0.8
     
     ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
-    print(ranking_mat[0:5])
     score = topn_precision(ranking_mat, user_items_test_dict)
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
@@ -382,9 +383,10 @@ def objective(trial):
 
 if __name__ == '__main__':
     model = pickle.load(open('model.pickle', 'rb'))
+
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    #df.to_csv('./hyparams_result_reconstruct.csv')
-    #with open('best_param_reconstruct.pickle', 'wb') as f:
-    #    pickle.dump(study.best_params, f)
+    df.to_csv('./hyparams_result_reconstruct.csv')
+    with open('best_param_reconstruct.pickle', 'wb') as f:
+        pickle.dump(study.best_params, f)
