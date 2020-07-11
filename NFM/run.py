@@ -36,7 +36,7 @@ def objective(trial):
     user_size = len(dataset.user_list)
     item_size = len(dataset.item_list)
     layer_size = trial.suggest_int('layer_size', 1, 3)
-    nfm = model.NFM(int(embedding_dim), user_size, item_size, layer_size)
+    nfm = model.NFM(int(embedding_dim), user_size, item_size, layer_size).to(device)
 
     batch_size = int(trial.suggest_discrete_uniform('batch_size', 128, 512, 128))
     lr= trial.suggest_loguniform('lr', 1e-4, 1e-2)
@@ -46,8 +46,8 @@ def objective(trial):
     lr_decay_rate = trial.suggest_uniform('lr_decay_rate', 0.5, 1)
 
     iterater = training.TrainIterater(batch_size=batch_size)
-    score = iterater.iterate_epoch(nfm, lr, epoch=5, weight_decay=weight_decay, warmup=warmup, 
-                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1)
+    score = iterater.iterate_epoch(nfm, lr, epoch=3000, weight_decay=weight_decay, warmup=warmup, 
+                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
 
     torch.cuda.empty_cache()
 
@@ -59,7 +59,7 @@ def objective(trial):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./hyparams_result.csv')
     with open('best_param', 'wb') as f:

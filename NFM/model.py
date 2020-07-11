@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class NFM(nn.Module):
 
@@ -12,7 +13,7 @@ class NFM(nn.Module):
         self.user_embed = nn.Embedding(user_size, embedding_dim)
         self.item_embed = nn.Embedding(item_size, embedding_dim)
 
-        self.layers = [nn.Linear(embedding_dim, embedding_dim) for i in range(layer_size)]
+        self.layers = [nn.Linear(embedding_dim, embedding_dim).to(device) for i in range(layer_size)]
         self.layer_size = layer_size
         
         
