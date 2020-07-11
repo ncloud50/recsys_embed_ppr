@@ -99,8 +99,8 @@ class TrainIterater():
             
             batch = self.dataset.get_batch(batch_size=self.batch_size)
             loss = self.train(batch, loss_func, optimizer, model)
-            print_loss_total += loss
-            plot_loss_total += loss
+            print_loss_total += loss.detach()
+            plot_loss_total += loss.detach()
 
             # print_everyごとに現在の平均のlossと、時間、dataset全体に対する進捗(%)を出力
             if (i+1) % print_every == 0:

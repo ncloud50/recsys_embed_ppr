@@ -32,6 +32,9 @@ def time_since(runtime):
 
 def objective(trial):
     start = time.time()
+    import gc
+    gc.collect()
+
     # データ読み込み
     dataset = AmazonDataset('./data', model_name='SparseTransE')
     
@@ -57,6 +60,9 @@ def objective(trial):
     score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     
+    torch.cuda.empty_cache()
+
+
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
     
