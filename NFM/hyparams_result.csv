@@ -1,0 +1,2 @@
+,number,value,datetime_start,datetime_complete,duration,params_batch_size,params_embedding_dim,params_layer_size,params_lr,params_lr_decay_rate,state
+0,0,-0.007560443447671742,2020-07-12 06:34:53.869211,2020-07-12 06:36:04.082819,0 days 00:01:10.213608000,256.0,96.0,3,0.00020850156873957455,0.5441733695642568,COMPLETE

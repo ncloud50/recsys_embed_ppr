@@ -24,8 +24,10 @@ class NFM(nn.Module):
         interaction_embed = user_embed * item_embed
 
         for i in range(self.layer_size):
+            interaction_embed = F.relu(interaction_embed)
             interaction_embed = self.layers[i](interaction_embed)
 
+        interaction_embed = F.relu(interaction_embed)
         prob = torch.sigmoid(torch.sum(interaction_embed, 1))
         
         return prob

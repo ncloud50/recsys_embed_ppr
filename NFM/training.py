@@ -98,7 +98,7 @@ class TrainIterater():
                           
         for i in range(epoch):
             plot_loss_list.extend(self.iterate_train(model, lr=lr, optimizer=optimizer, 
-                                                     weight_decay=weight_decay, print_every=1e+5))
+                                                     weight_decay=weight_decay, print_every=50))
             
             # lrスケジューリング
             if i > warmup:
@@ -110,8 +110,8 @@ class TrainIterater():
                 plot_score_list.append(score)
                 print('epoch: {}  precision: {}'.format(i, score))
         
-        self._plot(plot_loss_list)
-        self._plot(plot_score_list)
+        #self._plot(plot_loss_list)
+        #self._plot(plot_score_list)
         
         # とりあえず最後のepochのscoreを返す
         return eval_model.topn_precision(model)
