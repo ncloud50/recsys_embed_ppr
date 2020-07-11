@@ -197,7 +197,10 @@ def reconstruct_kg(model):
     i_i_v_mat = mat_to_graph(item_index, item_index, i_i_v_mat)
     i_b_mat = mat_to_graph(item_index, brand_index, i_b_mat)
 
-    return u_i_mat + i_i_b_mat + i_i_v_mat + i_b_mat
+    kg_mat = u_i_mat + i_i_b_mat + i_i_v_mat + i_b_mat
+    kg_mat = kg_mat / kg_mat.sum(axis=1)
+
+    return kg_mat
 
 
 def mat_to_graph(row_idx, col_idx, mat):
@@ -219,7 +222,7 @@ def pagerank_scipy(G, sim_mat,  personal_vec=None, alpha=0.85, beta=0.01,
                    max_iter=500, tol=1.0e-6, weight='weight',
                    dangling=None):
     
-    import scipy.sparse
+    #import scipy.sparse
 
     N = len(G)
     if N == 0:
@@ -316,6 +319,7 @@ def item_ppr(sim_mat, alpha, beta):
 def get_ranking_mat(model, gamma, alpha=0.85, beta=0.01):
     ranking_mat = []
     sim_mat = reconstruct_kg(model)
+    #sim_mat = mk_sparse_sim_mat(model, gamma)
     pred = item_ppr(sim_mat, alpha, beta)
     #print(pred.shape)
     for i in range(len(dataset.user_list)):
@@ -364,12 +368,14 @@ def objective(trial):
     #gamma3 = trial.suggest_uniform('gamma3', 0, 1)
     #gamma = [gamma1, gamma2, gamma3]
     gamma = [1, 2, 3]
+    alpha = 0.8
     
     ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
     print(ranking_mat[0:5])
     score = topn_precision(ranking_mat, user_items_test_dict)
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
+    print(score)
     
     return -1 * score
 
@@ -379,6 +385,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=1)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result_kgreconstruct.csv')
-    with open('best_param_kgreconstruct.pickle', 'wb') as f:
-        pickle.dump(study.best_params, f)
+    #df.to_csv('./hyparams_result_reconstruct.csv')
+    #with open('best_param_reconstruct.pickle', 'wb') as f:
+    #    pickle.dump(study.best_params, f)
