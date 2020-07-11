@@ -25,15 +25,15 @@ class TrainIterater():
         self.batch_size = batch_size
         
         
-    def train(self, batch, y_train, loss_func, optimizer, model):
+    def train(self, batch, loss_func, optimizer, model):
         optimizer.zero_grad()
 
-        posi_batch, nega_batch = batch
-        user_tensor = torch.tensor(posi_batch[:, 0], dtype=torch.long, device=device)
-        item_tensor = torch.tensor(posi_batch[:, 1], dtype=torch.long, device=device)
-        nega_item_tensor = torch.tensor(nega_batch[:, 1], dtype=torch.long, device=device)
+        batch, y_train = batch
+        user_tensor = torch.tensor(batch[:, 0], dtype=torch.long, device=device)
+        item_tensor = torch.tensor(batch[:, 1], dtype=torch.long, device=device)
+        y_train = torch.tensor(y_train, dtype=torch.float, device=device)
 
-        pred = model(user_tensor, item_tensor, nega_item_tensor)
+        pred = model(user_tensor, item_tensor)
         #print(pred)
         loss = loss_func(pred, y_train)
         loss.backward()
@@ -65,13 +65,10 @@ class TrainIterater():
             #batch = get_batch()
             batch = self.dataset.get_batch(batch_size=self.batch_size)
 
-            # BPRなのでtargetは全部1
-            y_train = torch.ones(self.batch_size, dtype=torch.float, device=device)
+            loss = self.train(batch, loss_func, optimizer, model)
 
-            loss = self.train(batch, y_train, loss_func, optimizer, model)
-
-            print_loss_total += loss
-            plot_loss_total += loss
+            print_loss_total += loss.detach()
+            plot_loss_total += loss.detach()
 
 
             # print_everyごとに現在の平均のlossと、時間、dataset全体に対する進捗(%)を出力
@@ -111,7 +108,7 @@ class TrainIterater():
             if (i+1) % eval_every == 0:
                 score = eval_model.topn_precision(model)
                 plot_score_list.append(score)
-                #print('epoch: {}  precision: {}'.format(i, score))
+                print('epoch: {}  precision: {}'.format(i, score))
         
         self._plot(plot_loss_list)
         self._plot(plot_score_list)
