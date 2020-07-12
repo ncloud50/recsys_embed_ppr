@@ -3,8 +3,7 @@ import time
 import pandas as pd
 import numpy as np
 
-
-device='cpu'
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AmazonDataset:
 
@@ -19,7 +18,7 @@ class AmazonDataset:
         self.load_user_items_dict()
 
         # TransEの時だけ使う辞書
-        if model_name == 'TransE':
+        if model_name == 'TransE' or model_name == 'SparseTransE':
             self.relation_aggregate(self.nega_triplet_df)
 
 
@@ -47,6 +46,10 @@ class AmazonDataset:
         with open(self.data_dir + 'entity_list.txt', 'r') as f:
             for l in f:
                 self.entity_list.append(l.replace('\n', ''))
+
+        self.user_idx = [self.entity_list.index(u) for u in self.user_list]
+        self.item_idx = [self.entity_list.index(i) for i in self.item_list]
+        self.brand_idx = [self.entity_list.index(b) for b in self.brand_list]
 
         self.y_train = np.loadtxt(self.data_dir + 'y_train.txt')
                 
@@ -80,13 +83,39 @@ class AmazonDataset:
             batch_idx = np.random.permutation(len(self.triplet_df))[:batch_size]
             posi_batch = self.triplet_df.values[batch_idx]
             nega_batch = self.get_nega_batch(posi_batch[:, 2])
-
+            
             return posi_batch, nega_batch
+            
+        elif self.model_name == 'SparseTransE':
+            batch_idx = np.random.permutation(len(self.triplet_df))[:batch_size]
+            posi_batch = self.triplet_df.values[batch_idx]
+            nega_batch = self.get_nega_batch(posi_batch[:, 2])
+
+            # reguralizationのためのbatch
+            # entity_typeの数だけ
+            batch_entity_size = int(len(self.entity_list) / (len(self.triplet_df) / batch_size))
+            reg_batch_idx = np.random.permutation(len(self.entity_list))[:batch_entity_size]
+
+            batch_item = reg_batch_idx[reg_batch_idx < len(self.item_list)]
+
+            batch_user = reg_batch_idx[reg_batch_idx >= len(self.item_list)]
+            batch_user = batch_user[batch_user < len(self.user_list)]
+
+            batch_brand = reg_batch_idx[reg_batch_idx >= len(self.user_list)]
+            batch_brand = batch_brand[batch_brand < len(self.brand_list)]
+
+            return posi_batch, nega_batch, batch_user, batch_item, batch_brand
     
     def get_nega_batch(self, relations):
         nega_batch = []
         for rel in relations:
-            nega_triplet = self.relation_entity_dict[rel]
+            if rel in self.relation_entity_dict:
+                nega_triplet = self.relation_entity_dict[rel]
+            else:
+                head = np.random.randint(len(self.entity_list))
+                tail = np.random.randint(len(self.entity_list))
+                nega_batch.append([head, tail, rel])
+                continue
         
             # ここ直す
             if len(nega_triplet) == 0:

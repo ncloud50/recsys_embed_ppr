@@ -10,16 +10,16 @@ import torch.optim as optim
 
 from dataloader import AmazonDataset
 from evaluate import Evaluater
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 class TrainIterater():
 
 
-    def __init__(self, batch_size, model_name='DistMulti'):
+    def __init__(self, batch_size, data_dir, model_name='DistMulti'):
         #self.dataset = dataloader.AmazonDataset('./data')
-        self.dataset = AmazonDataset('./data', model_name=model_name)
+        #self.dataset = AmazonDataset('./data', model_name=model_name)
+        self.data_dir = data_dir
+        self.dataset = AmazonDataset(self.data_dir, model_name=model_name)
         self.batch_size = batch_size
         self.model_name = model_name
         
@@ -50,6 +50,27 @@ class TrainIterater():
             pred = model(h, t, r, n_h, n_t, n_r)
             loss = torch.sum(pred)
 
+        elif self.model_name == 'SparseTransE':
+            posi_batch, nega_batch, batch_user, batch_item, batch_brand = batch
+            h = torch.tensor(posi_batch[:, 0], dtype=torch.long, device=device)
+            t = torch.tensor(posi_batch[:, 1], dtype=torch.long, device=device)
+            r = torch.tensor(posi_batch[:, 2], dtype=torch.long, device=device)
+
+            n_h = torch.tensor(nega_batch[:, 0], dtype=torch.long, device=device)
+            n_t = torch.tensor(nega_batch[:, 1], dtype=torch.long, device=device)
+            n_r = torch.tensor(nega_batch[:, 2], dtype=torch.long, device=device)
+
+            reg_user = torch.tensor(batch_user, dtype=torch.long, device=device)
+            reg_item = torch.tensor(batch_item, dtype=torch.long, device=device)
+            reg_brand = torch.tensor(batch_brand, dtype=torch.long, device=device)
+
+            pred = model(h, t, r, n_h, n_t, n_r,
+                         reg_user, reg_item, reg_brand)
+
+            loss = torch.sum(pred)
+
+
+
         loss.backward()
         optimizer.step()
 
@@ -69,19 +90,17 @@ class TrainIterater():
 
         if self.model_name == 'DistMulti':
             train_num = len(self.dataset.triplet_df) + len(self.dataset.nega_triplet_df)
-        elif self.model_name == 'TransE':
+        elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
             train_num = len(self.dataset.triplet_df)
 
         start_time = time.time()
         
         for i in range(int(train_num / self.batch_size) + 1):
+            
             batch = self.dataset.get_batch(batch_size=self.batch_size)
-
             loss = self.train(batch, loss_func, optimizer, model)
-
-            print_loss_total += loss
-            plot_loss_total += loss
-
+            print_loss_total += loss.detach()
+            plot_loss_total += loss.detach()
 
             # print_everyごとに現在の平均のlossと、時間、dataset全体に対する進捗(%)を出力
             if (i+1) % print_every == 0:
@@ -111,7 +130,7 @@ class TrainIterater():
                 
     def iterate_epoch(self, model, lr, epoch, weight_decay=0, 
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5):
-        eval_model = Evaluater(model_name=self.model_name)
+        eval_model = Evaluater(self.data_dir, model_name=self.model_name)
         plot_loss_list = []
         plot_score_list = []
                           
@@ -126,12 +145,13 @@ class TrainIterater():
             if (i+1) % eval_every == 0:
                 score = eval_model.topn_precision(model)
                 plot_score_list.append(score)
-                print('epoch: {}  precision: {}'.format(i, score))
+                #print('epoch: {}  precision: {}'.format(i, score))
         
         self._plot(plot_loss_list)
         self._plot(plot_score_list)
         
         return eval_model.topn_precision(model)
+
 
     def _plot(self, loss_list):
         # ここもっとちゃんと書く

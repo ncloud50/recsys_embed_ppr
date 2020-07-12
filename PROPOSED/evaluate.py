@@ -9,14 +9,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from dataloader import AmazonDataset
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class Evaluater():
 
 
-    def __init__(self, model_name='DistMulti'):
-        self.dataset = AmazonDataset('./data', model_name=model_name)
+    def __init__(self, data_dir, model_name='DistMulti'):
+        self.dataset = AmazonDataset(data_dir, model_name=model_name)
         self.model_name = model_name
 
         
@@ -27,7 +27,7 @@ class Evaluater():
         not_count = 0
         with torch.no_grad():
 
-            batch_size = 512
+            batch_size = int(len(self.dataset.item_list) / 2)
             item_index = [self.dataset.entity_list.index(item) for item in self.dataset.item_list]
             user_index = [self.dataset.entity_list.index(user) for user in self.dataset.user_list]
             for i in user_index:

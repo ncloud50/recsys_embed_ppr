@@ -25,13 +25,11 @@ warnings.filterwarnings('ignore')
 
 
 # dataload
-model_name = 'TransE'
-dataset = AmazonDataset('./data', model_name='TransE')
+data_dir = './data2'
+dataset = AmazonDataset(data_dir, model_name='TransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
-user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
+user_items_test_dict = pickle.load(open('./data2/user_items_test_dict.pickle', 'rb'))
 
-# ハイパラ
-kgembed_param = pickle.load(open('./kgembed_param.pickle', 'rb'))
 
 # load network
 G = nx.DiGraph()
@@ -39,22 +37,29 @@ G.add_nodes_from([i for i in range(len(dataset.entity_list))])
 G.add_edges_from(edges)
 
 
-def train_embed(params):
+def train_embed(params, model_name):
     
     # ハイパラ読み込み
     embedding_dim = params['embedding_dim']
     batch_size = params['batch_size']
     lr = params['lr']
     weight_decay = params['weight_decay']
-    warmup = params['warmup']
-    lr_decay_every = params['lr_decay_every']
+    #warmup = params['warmup']
+    #lr_decay_every = params['lr_decay_every']
+    warmup = 350
+    lr_decay_every = 2
     lr_decay_rate = params['lr_decay_rate']
+    if model_name == 'SparseTransE':
+        alpha = params['alpha']
     
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
-    model = TransE(int(embedding_dim), relation_size, entity_size).to(device)
-    iterater = TrainIterater(batch_size=int(batch_size), model_name=model_name)
-    score =iterater.iterate_epoch(model, lr=lr, epoch=5000, weight_decay=weight_decay, warmup=warmup,
+    if model_name == 'TransE':
+        model = TransE(int(embedding_dim), relation_size, entity_size).to(device)
+    elif model_name == 'SparseTransE':
+        model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
+    iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
+    score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     return model
 
@@ -381,11 +386,16 @@ def objective(trial):
 
 
 if __name__ == '__main__':
-    model = pickle.load(open('model.pickle', 'rb'))
+    # ハイパラ
+    kgembed_param = pickle.load(open('./best_param_no_item-item_relation.pickle', 'rb'))
+
+    model = train_embed(kgembed_param, 'TransE')
+
+    #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result_gamma3.csv')
-    with open('best_param_gamma3.pickle', 'wb') as f:
+    df.to_csv('./result/hyparams_result_gamma_no_item-item_relation.csv')
+    with open('./result/best_param_gamma_no_item-item_relation.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
