@@ -44,7 +44,7 @@ def user_aggregate_item(user_list, df):
 
 if __name__ == '__main__':
     # データ読み込み
-    user_item_df = pd.read_csv('../user_item.csv')
+    user_item_df = pd.read_csv('../Luxury_5core/user_item.csv')
     item_list = list(set(list(user_item_df['asin'])))
     user_list = list(set(list(user_item_df['reviewerID'])))
     print('item size: {}'.format(len(item_list)))
