@@ -41,7 +41,7 @@ def objective(trial):
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
     embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
-    alpha = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2) #SparseTransEの時だけ
+    alpha = trial.suggest_loguniform('alpha', 1e-6, 1e-2) #SparseTransEの時だけ
     model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     
     batch_size = trial.suggest_int('batch_size', 128, 512, 128)
