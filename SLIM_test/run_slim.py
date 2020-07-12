@@ -9,15 +9,16 @@ from importlib import reload
 import optuna
 
 # データロード
-user_item_train_df = pd.read_csv('./data/user_item_train.csv')
-user_item_test_df = pd.read_csv('./data/user_item_test.csv')
+data_dir = './data_luxury_5core/'
+user_item_train_df = pd.read_csv(data_dir + 'user_item_train.csv')
+user_item_test_df = pd.read_csv(data_dir + 'user_item_test.csv')
 user_list = []
 item_list = []
-with open('./data/user_list.txt', 'r') as f:
+with open(data_dir + 'user_list.txt', 'r') as f:
     for l in f:
         user_list.append(l.replace('\n', ''))
         
-with open('./data/item_list.txt', 'r') as f:
+with open(data_dir + 'item_list.txt', 'r') as f:
     for l in f:
         item_list.append(l.replace('\n', ''))
 
@@ -40,7 +41,8 @@ def objective(trial):
     #lin_model = trial.suggest_categorical('lin_model', ['lasso', 'elastic'])
     
     model = SLIM_model.SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model=lin_model)
-    model.fit(user_item_train_df)
+    model.fit_glm(user_item_train_df)
+    #model.fit(user_item_train_df)
     #model.fit_multi(user_item_train_df)
     #model.load_sim_mat('./sim_mat.txt', user_item_train_df)
 

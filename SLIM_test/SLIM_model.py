@@ -6,6 +6,8 @@ from multiprocessing import Pool
 import multiprocessing as multi
 from joblib import Parallel, delayed
 
+from pyglmnet import GLM
+
 
 class SLIM():
     
@@ -14,7 +16,8 @@ class SLIM():
         if lin_model == 'lasso':
             self.reg = Lasso(alpha=alpha, positive=True)
         elif lin_model == 'elastic':
-            self.reg = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, positive=True)
+            #self.reg = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, positive=True)
+            self.reg = GLM(distr='gaussian', alpha=l1_ratio, reg_lambda=alpha)
             
         self.user_num = user_num
         self.item_num = item_num
@@ -36,6 +39,31 @@ class SLIM():
             self.reg.fit(X.toarray(), y.toarray())
             w = np.insert(self.reg.coef_, i, 0)[:,  np.newaxis]
             sim_mat.append(w)
+    
+            if i > 1:
+                break
+
+        self.sim_mat = np.concatenate(sim_mat, axis=1)
+
+
+    def fit_glm(self, user_item_train_df):
+        # rating_mat
+        self.row = np.array([r[0] for r in user_item_train_df.values], dtype=int)
+        self.col = np.array([r[1] for r in user_item_train_df.values], dtype=int)
+        self.data = np.ones(len(user_item_train_df), dtype=int)
+        self.rating_mat = csr_matrix((self.data, (self.row, self.col)), shape = (self.user_num, self.item_num))
+        
+        # linear modelを解く
+        sim_mat = []
+        for i in range(self.item_num):
+            X = self.del_col(i)
+            y = self.rating_mat[:, i]
+    
+            self.reg.fit(X, y)
+            print(self.reg.beta_)
+            print(self.reg.beta_.shape)
+            #w = np.insert(self.reg.coef_, i, 0)[:,  np.newaxis]
+            #sim_mat.append(w)
     
             if i > 1:
                 break
