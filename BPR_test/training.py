@@ -70,8 +70,8 @@ class TrainIterater():
 
             loss = self.train(batch, y_train, loss_func, optimizer, model)
 
-            print_loss_total += loss
-            plot_loss_total += loss
+            print_loss_total += loss.detach()
+            plot_loss_total += loss.detach()
 
 
             # print_everyごとに現在の平均のlossと、時間、dataset全体に対する進捗(%)を出力
