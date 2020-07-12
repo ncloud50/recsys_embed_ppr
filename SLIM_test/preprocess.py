@@ -4,7 +4,7 @@ import numpy as np
 
 if __name__ == '__main__':
     # データ読み込み
-    user_item_df = pd.read_csv('../user_item.csv')
+    user_item_df = pd.read_csv('../All_Beauty/user_item.csv')
     item_list = list(set(list(user_item_df['asin'])))
     user_list = list(set(list(user_item_df['reviewerID'])))
     print('item size: {}'.format(len(item_list)))

@@ -4,10 +4,10 @@ import pickle
 
 
 # データ読み込み
-user_item_df = pd.read_csv('../user_item.csv')
-item_brand_df = pd.read_csv('../item_brand.csv')
-item_buy_item_df = pd.read_csv('../item_buy_item.csv')
-item_view_item_df = pd.read_csv('../item_view_item.csv')
+user_item_df = pd.read_csv('../All_Beauty/user_item.csv')
+item_brand_df = pd.read_csv('../All_Beauty/item_brand.csv')
+item_buy_item_df = pd.read_csv('../All_Beauty/item_buy_item.csv')
+item_view_item_df = pd.read_csv('../All_Beauty/item_view_item.csv')
 
 entity_type = ['user', 'item', 'brand']
 relation_type = ['u_buy_i', 'i_belong_b', 'i_also_buy_i', 'i_also_view_i']
