@@ -1,4 +1,8 @@
-import prepro_test
+import preprocess_cython
+import time
 
 if __name__ == '__main__':
-    prepro_test.func()
+    s = time.time()
+    preprocess_cython.func()
+    runtime = time.time() - s
+    print(runtime)
