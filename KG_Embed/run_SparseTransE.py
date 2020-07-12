@@ -42,7 +42,7 @@ def objective(trial):
     entity_size = len(dataset.entity_list)
     embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
     alpha = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2) #SparseTransEの時だけ
-    model = SparseTransE(int(embedding_dim), relation_size, entity_size).to(device)
+    model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     
     batch_size = trial.suggest_int('batch_size', 128, 512, 128)
     iterater = TrainIterater(batch_size=int(batch_size), data_dir='./data', model_name=model_name)
