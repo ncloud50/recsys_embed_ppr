@@ -1,12 +1,45 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import time
+from joblib import Parallel, delayed
 
-if __name__ == '__main__':
+
+def mk_user_item_id(i, user_item_values):
+    row = user_item_values[i]
+    user = user_list.index(row[0])
+    item = item_list.index(row[1])
+    return [user, item]
+
+
+def user_item_id(user_item_values, user_list, item_list):
+    # user_itemをID化
+    count = 0
+    user_item_list = []
+
+    # ここを並列化
+    #user_item_len = len(user_item_values)
+    #user_item_list = Parallel(n_jobs=-1)([delayed(mk_user_item_id)(i, user_item_values) for i in range(500)])
+
+    for row in user_item_values:
+        user = user_list.index(row[0])
+        item = item_list.index(row[1])
+        user_item_list.append([user, item])
+
+        #count += 1
+        #if count > 1000:
+        #    break
+
+    df = pd.DataFrame(np.array(user_item_list),
+                                columns = ['reviewerID', 'asin'])
+    return df
+
+
+def func():
     # データ読み込み
-    user_item_df = pd.read_csv('../All_Beauty/user_item.csv')
-    item_list = list(set(list(user_item_df['asin'])))
-    user_list = list(set(list(user_item_df['reviewerID'])))
+    user_item_df_no_id = pd.read_csv('../All_Beauty/user_item.csv')
+    item_list = list(set(list(user_item_df_no_id['asin'])))
+    user_list = list(set(list(user_item_df_no_id['reviewerID'])))
     print('item size: {}'.format(len(item_list)))
     print('user size: {}'.format(len(user_list)))
     # 保存
@@ -19,15 +52,8 @@ if __name__ == '__main__':
             f.write(item + '\n')
             
 
-    # user_itemをID化
-    user_item_list = []
-    for row in user_item_df.values:
-        user = user_list.index(row[0])
-        item = item_list.index(row[1])
-        user_item_list.append([user, item])
-
-    user_item_df = pd.DataFrame(np.array(user_item_list),
-                                columns = ['reviewerID', 'asin'])
+    # user-itemをID化
+    user_item_df = user_item_id(user_item_df_no_id.values, user_list, item_list)
 
     # train-testスプリット
     user_item_df = user_item_df.take(np.random.permutation(len(user_item_df)))
@@ -40,3 +66,11 @@ if __name__ == '__main__':
     # スプリットを保存
     user_item_train_df.to_csv('./data/user_item_train.csv', index=False)
     user_item_test_df.to_csv('./data/user_item_test.csv', index=False)
+
+
+
+if __name__ == '__main__':
+    s = time.time()
+    func()
+    runtime = time.time() - s
+    print(runtime)
