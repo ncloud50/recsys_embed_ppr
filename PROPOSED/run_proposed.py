@@ -26,7 +26,7 @@ warnings.filterwarnings('ignore')
 
 # dataload
 data_dir = './data2'
-dataset = AmazonDataset(data_dir, model_name='TransE')
+dataset = AmazonDataset(data_dir, model_name='SparseTransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
 user_items_test_dict = pickle.load(open('./data2/user_items_test_dict.pickle', 'rb'))
 
@@ -387,15 +387,16 @@ def objective(trial):
 
 if __name__ == '__main__':
     # ハイパラ
-    kgembed_param = pickle.load(open('./best_param_no_item-item_relation.pickle', 'rb'))
+    kgembed_param = pickle.load(open('./best_param_SparseTransE_no_item-item_relation.pickle', 'rb'))
+    print(kgembed_param)
 
-    model = train_embed(kgembed_param, 'TransE')
+    model = train_embed(kgembed_param, 'SparseTransE')
 
     #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result/hyparams_result_gamma_no_item-item_relation.csv')
-    with open('./result/best_param_gamma_no_item-item_relation.pickle', 'wb') as f:
+    df.to_csv('./result/hyparams_result_gamma_SparseTransE_no_item-item_relation.csv')
+    with open('./result/best_param_gamma_SparseTransE_no_item-item_relation.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
