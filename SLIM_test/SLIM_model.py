@@ -6,7 +6,7 @@ from multiprocessing import Pool
 import multiprocessing as multi
 from joblib import Parallel, delayed
 
-from pyglmnet import GLM
+#from pyglmnet import GLM
 
 
 class SLIM():
@@ -16,8 +16,8 @@ class SLIM():
         if lin_model == 'lasso':
             self.reg = Lasso(alpha=alpha, positive=True)
         elif lin_model == 'elastic':
-            #self.reg = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, positive=True)
-            self.reg = GLM(distr='gaussian', alpha=l1_ratio, reg_lambda=alpha)
+            self.reg = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, positive=True)
+            #self.reg = GLM(distr='gaussian', alpha=l1_ratio, reg_lambda=alpha)
             
         self.user_num = user_num
         self.item_num = item_num
