@@ -20,8 +20,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TrainIterater():
 
 
-    def __init__(self, batch_size):
-        self.dataset = dataloader.AmazonDataset('./data')
+    def __init__(self, batch_size, data_dir):
+        self.data_dir = data_dir
+        self.dataset = dataloader.AmazonDataset(data_dir)
         self.batch_size = batch_size
         
         
@@ -92,7 +93,7 @@ class TrainIterater():
                 
     def iterate_epoch(self, model, lr, epoch, optimizer='Adam', weight_decay=0, 
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5):
-        eval_model = evaluate.Evaluater()
+        eval_model = evaluate.Evaluater(self.data_dir)
         plot_loss_list = []
         plot_score_list = []
                           

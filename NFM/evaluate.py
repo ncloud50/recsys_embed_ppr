@@ -16,8 +16,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Evaluater():
 
 
-    def __init__(self):
-        self.dataset = dataloader.AmazonDataset('./data')
+    def __init__(self, data_dir):
+        self.dataset = dataloader.AmazonDataset(data_dir)
 
         
     def topn_precision(self, model, n=10):

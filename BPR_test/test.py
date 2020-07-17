@@ -72,4 +72,4 @@ if __name__ == '__main__':
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
 
     # test結果を記録
-    np.savetxt('./test_score.txt', score)
+    np.savetxt('./score.txt', np.array([score]))

@@ -22,10 +22,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # weight_decay, lr, warmup, lr_decay_every, lr_decay_rate
 # kg embed model
 
-model_name = 'TransE'
+model_name = 'SparseTransE'
 
 def load_params():
-    return pickle.load(open('./result/best_param.pickle', 'rb'))
+    return pickle.load(open('./result/best_param_SparseTransE.pickle', 'rb'))
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -45,7 +45,8 @@ if __name__ == '__main__':
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
     embedding_dim = params['embedding_dim']
-    model = TransE(int(embedding_dim), relation_size, entity_size).to(device)
+    alpha = params['alpha']
+    model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     
     batch_size = params['batch_size']
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     
     torch.cuda.empty_cache()
 
-    np.savetxt('score_transe.txt', np.array([score]))
+    np.savetxt('score_sparse_transe.txt', np.array([score]))
 
 
 

@@ -25,10 +25,10 @@ warnings.filterwarnings('ignore')
 
 
 # dataload
-data_dir = './data'
+data_dir = '../data'
 dataset = AmazonDataset(data_dir, model_name='SparseTransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
-user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
+user_items_test_dict = pickle.load(open(data_dir + '/user_items_test_dict.pickle', 'rb'))
 
 
 # load network
@@ -36,6 +36,8 @@ G = nx.DiGraph()
 G.add_nodes_from([i for i in range(len(dataset.entity_list))])
 G.add_edges_from(edges)
 
+def load_params():
+    return pickle.load(open('result/best_param_gamma_SparseTransE.pickle', 'rb'))
 
 def train_embed(params, model_name):
     
@@ -363,37 +365,22 @@ def time_since(runtime):
     return (mi, sec)
 
 
-def objective(trial):
-    start = time.time()
-
-    alpha = trial.suggest_uniform('alpha', 0, 0.5)
-    beta = trial.suggest_uniform('beta', 0, 0.5)
-    gamma1 = trial.suggest_uniform('gamma1', 0, 1)
-    gamma2 = trial.suggest_uniform('gamma2', 0, 1)
-    gamma3 = trial.suggest_uniform('gamma3', 0, 1)
-    gamma = [gamma1, gamma2, gamma3]
-    
-    ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
-    score = topn_precision(ranking_mat, user_items_test_dict)
-    mi, sec = time_since(time.time() - start)
-    print('{}m{}sec'.format(mi, sec))
-    print(score)
-    
-    return -1 * score
-
-
 if __name__ == '__main__':
-    # ハイパラ
+    # train kg embed
     kgembed_param = pickle.load(open('./best_param_SparseTransE.pickle', 'rb'))
-    print(kgembed_param)
-
     model = train_embed(kgembed_param, 'SparseTransE')
 
-    #model = pickle.load(open('model.pickle', 'rb'))
+    # load param
+    params = load_params()
+    alpha = params['alpha']
+    beta = params['beta']
+    gamma1 = params['gamma1']
+    gamma2 = params['gamma2']
+    gamma3 = params['gamma3']
+    gamma = [gamma1, gamma2, gamma3]
 
-    study = optuna.create_study()
-    study.optimize(objective, n_trials=30)
-    df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result/hyparams_result_gamma_SparseTransE.csv')
-    with open('./result/best_param_gamma_SparseTransE.pickle', 'wb') as f:
-        pickle.dump(study.best_params, f)
+    ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
+    score = topn_precision(ranking_mat, user_items_test_dict)
+
+    np.savetxt('score_transe.txt', np.array([score]))
+
