@@ -37,10 +37,10 @@ def negative_sampling(triplet_df, user_list, item_list,
     
 if __name__ == '__main__':
     # データ読み込み
-    user_item_df = pd.read_csv('../user_item.csv')
-    item_brand_df = pd.read_csv('../item_brand.csv')
-    item_buy_item_df = pd.read_csv('../item_buy_item.csv')
-    item_view_item_df = pd.read_csv('../item_view_item.csv')
+    user_item_df = pd.read_csv('../Luxury_5core/user_item.csv')
+    item_brand_df = pd.read_csv('../Luxury_5core/item_brand.csv')
+    item_buy_item_df = pd.read_csv('../Luxury_5core/item_buy_item.csv')
+    item_view_item_df = pd.read_csv('../Luxury_5core/item_view_item.csv')
 
     entity_type = ['user', 'item', 'brand']
     relation_type = ['u_buy_i', 'i_belong_b', 'i_also_buy_i', 'i_also_view_i']
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     user_item_test_df = pd.DataFrame(user_item_test, columns = ['reviewerID', 'asin', 'relation'])
 
     #保存
-    user_item_train_df.to_csv('./data/user_item_test.csv', index=False)
+    user_item_test_df.to_csv('./data/user_item_test.csv', index=False)
 
 
 
