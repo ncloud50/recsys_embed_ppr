@@ -382,5 +382,5 @@ if __name__ == '__main__':
     ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
     score = topn_precision(ranking_mat, user_items_test_dict)
 
-    np.savetxt('score_transe.txt', np.array([score]))
+    np.savetxt('score_sparse_transe.txt', np.array([score]))
 
