@@ -56,7 +56,7 @@ def negative_sampling_bpr(train_df, user_list, item_list):
 
     user_item_train_nega_df = pd.DataFrame(user_item_train_nega, columns=['reviewerID', 'asin'])
     #保存
-    user_item_train_nega_df.to_csv('./data/user_item_train_nega_bpr.csv', index=False)
+    user_item_train_nega_df.to_csv('./data/bpr/user_item_train_nega.csv', index=False)
 
     return user_item_train_nega_df
     
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     #保存
     user_item_test_df.to_csv('./data/user_item_test.csv', index=False)
-    user_item_test_bpr_df.to_csv('./data/user_item_test_bpr.csv', index=False)
+    user_item_test_bpr_df.to_csv('./data/bpr/user_item_test.csv', index=False)
 
 
     # user_item_train_dfをBPR用にID化する
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     user_item_train_bpr_df = pd.DataFrame(user_item_train, columns = ['reviewerID', 'asin'])
 
     #保存
-    user_item_train_bpr_df.to_csv('./data/user_item_train_bpr.csv', index=False)
+    user_item_train_bpr_df.to_csv('./data/bpr/user_item_train.csv', index=False)
 
     # 一つのtriplet dataframeを作る
     # これが訓練データになる
@@ -229,11 +229,23 @@ if __name__ == '__main__':
             user_items_dict[i] = list(items_df['asin'])
         return user_items_dict
 
+    def user_aggregate_item_bpr(df):
+        user_items_dict = {}
+        #for user in user_list:
+        for i in range(len(user_list)):
+            items_df = df[df['reviewerID'] == i]
+            user_items_dict[i] = list(items_df['asin'])
+        return user_items_dict
+
     user_items_test_dict = user_aggregate_item(user_item_test_df)
-    user_items_nega_bpr_dict = user_aggregate_item(nega_user_item_train_bpr_df)
+    user_items_nega_bpr_dict = user_aggregate_item_bpr(nega_user_item_train_bpr_df)
+    user_items_test_bpr_dict = user_aggregate_item_bpr(user_item_test_bpr_df)
 
     with open('./data/user_items_test_dict.pickle', 'wb') as f:
         pickle.dump(user_items_test_dict, f)
 
-    with open('./data/user_items_nega_bpr_dict.pickle', 'wb') as f:
+    with open('./data/bpr/user_items_nega_dict.pickle', 'wb') as f:
         pickle.dump(user_items_nega_bpr_dict, f)
+
+    with open('./data/bpr/user_items_test_dict.pickle', 'wb') as f:
+        pickle.dump(user_items_test_bpr_dict, f)
