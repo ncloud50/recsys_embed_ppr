@@ -77,6 +77,7 @@ class TransE(nn.Module):
         t = self.entity_embed(tail)
         r = self.relation_embed(relation)
 
+        #print(h)
         batch_size = h.shape[0]
         # normalize
         h /= torch.norm(h, dim=1).view(batch_size, -1)

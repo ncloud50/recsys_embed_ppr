@@ -36,7 +36,8 @@ def objective(trial):
     gc.collect()
 
     # データ読み込み
-    dataset = AmazonDataset('./data', model_name='SparseTransE')
+    data_dir = '../data'
+    dataset = AmazonDataset(data_dir, model_name='SparseTransE')
     
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
@@ -45,7 +46,7 @@ def objective(trial):
     model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     
     batch_size = trial.suggest_int('batch_size', 128, 512, 128)
-    iterater = TrainIterater(batch_size=int(batch_size), data_dir='./data', model_name=model_name)
+    iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
     
     lr= trial.suggest_loguniform('lr', 1e-4, 1e-2)
     weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2)
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result_SparseTransE.csv')
-    with open('best_param_SparseTransE.pickle', 'wb') as f:
+    df.to_csv('./beauty_hyparams_result_SparseTransE.csv')
+    with open('beauty_best_param_SparseTransE.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
 
