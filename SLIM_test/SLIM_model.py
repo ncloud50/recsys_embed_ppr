@@ -40,8 +40,8 @@ class SLIM():
             w = np.insert(self.reg.coef_, i, 0)[:,  np.newaxis]
             sim_mat.append(w)
     
-            if i > 1:
-                break
+            #if i > 1:
+            #    break
 
         self.sim_mat = np.concatenate(sim_mat, axis=1)
 

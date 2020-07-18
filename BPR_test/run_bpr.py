@@ -4,6 +4,7 @@ from training import TrainIterater
 from evaluate import Evaluater
 
 import time
+import pickle
 import optuna
 import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,14 +26,14 @@ def objective(trial):
     
     import gc
     gc.collect()
-
-    dataset = AmazonDataset('./data')
+    data_dir = '../data/bpr'
+    dataset = AmazonDataset('../data/bpr')
 
     embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 64, 16)
     bpr = BPR(int(embedding_dim), len(dataset.user_list), len(dataset.item_list)).to(device)
     
     batch_size = trial.suggest_discrete_uniform('batch_size', 64, 256, 64)
-    iterater = TrainIterater(batch_size=int(batch_size))
+    iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir)
     
     lr= trial.suggest_loguniform('lr', 1e-5, 1e-2)
     weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2)
@@ -56,4 +57,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('hyparams_result.csv')
+    df.to_csv('beauty_hyparams_result.csv')
+    with open('beauty_best_param.pickle', 'wb') as f:
+        pickle.dump(study.best_params, f)

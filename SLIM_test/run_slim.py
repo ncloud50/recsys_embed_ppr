@@ -9,7 +9,7 @@ from importlib import reload
 import optuna
 
 # データロード
-data_dir = './data_luxury_5core/'
+data_dir = '../data/bpr/'
 user_item_train_df = pd.read_csv(data_dir + 'user_item_train.csv')
 user_item_test_df = pd.read_csv(data_dir + 'user_item_test.csv')
 user_list = []
@@ -41,13 +41,12 @@ def objective(trial):
     #lin_model = trial.suggest_categorical('lin_model', ['lasso', 'elastic'])
     
     model = SLIM_model.SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model=lin_model)
-    model.fit_glm(user_item_train_df)
+    #model.fit_glm(user_item_train_df)
     #model.fit(user_item_train_df)
-    #model.fit_multi(user_item_train_df)
+    model.fit_multi(user_item_train_df)
     #model.load_sim_mat('./sim_mat.txt', user_item_train_df)
 
     # evaluate
-    '''
     eval_model = evaluate.Evaluater(user_item_test_df, len(user_list))
     score_sum = 0
     not_count = 0
@@ -59,10 +58,9 @@ def objective(trial):
             continue
         score_sum += score
 
-        #if i > 20:
+        #if i > 2:
         #    break
 
-    '''
 
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
@@ -72,8 +70,10 @@ def objective(trial):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    #study.optimize(objective, n_trials=20)
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=20)
+
+    df = study.trials_dataframe() # pandasのDataFrame形式
+    df.to_csv('./beauty_hyparams_result.csv')
     # save best params 
-    #with open('best_param.pickle', 'wb') as f:
-    #    pickle.dump(study.best_params, f)
+    with open('beauty_best_param.pickle', 'wb') as f:
+        pickle.dump(study.best_params, f)

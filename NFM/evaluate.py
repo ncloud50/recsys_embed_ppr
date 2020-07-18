@@ -27,7 +27,7 @@ class Evaluater():
         not_count = 0
         with torch.no_grad():
 
-            batch_size = 512
+            batch_size = 2000
             item_index = [i for i in range(len(self.dataset.item_list))]
             for i in range(len(self.dataset.user_list)):
                 if len(self.dataset.user_items_test_dict[i]) == 0:
