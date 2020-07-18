@@ -64,10 +64,10 @@ def negative_sampling_bpr(train_df, user_list, item_list):
     
 if __name__ == '__main__':
     # データ読み込み
-    user_item_df = pd.read_csv('./Luxury_5core/user_item.csv')
-    item_brand_df = pd.read_csv('./Luxury_5core/item_brand.csv')
-    item_buy_item_df = pd.read_csv('./Luxury_5core/item_buy_item.csv')
-    item_view_item_df = pd.read_csv('./Luxury_5core/item_view_item.csv')
+    user_item_df = pd.read_csv('./All_Beauty_2core/user_item.csv')
+    item_brand_df = pd.read_csv('./All_Beauty_2core/item_brand.csv')
+    item_buy_item_df = pd.read_csv('./All_Beauty_2core/item_buy_item.csv')
+    item_view_item_df = pd.read_csv('./All_Beauty_2core/item_view_item.csv')
 
     entity_type = ['user', 'item', 'brand']
     relation_type = ['u_buy_i', 'i_belong_b', 'i_also_buy_i', 'i_also_view_i']
