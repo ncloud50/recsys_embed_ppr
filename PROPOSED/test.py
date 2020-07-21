@@ -28,6 +28,10 @@ warnings.filterwarnings('ignore')
 data_dir = '../data'
 dataset = AmazonDataset(data_dir, model_name='TransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+# user-itemとitem-userどちらの辺も追加
+for r in dataset.triplet_df.values:
+    if r[2] == 0:
+        edges.append([r[1], r[0]])
 user_items_test_dict = pickle.load(open(data_dir + '/user_items_test_dict.pickle', 'rb'))
 
 
