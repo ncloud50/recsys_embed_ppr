@@ -26,7 +26,7 @@ warnings.filterwarnings('ignore')
 
 # dataload
 data_dir = './data'
-dataset = AmazonDataset(data_dir, model_name='TransE')
+dataset = AmazonDataset(data_dir, model_name='SparseTransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
 # user-itemとitem-userどちらの辺も追加
 for r in dataset.triplet_df.values:
@@ -230,7 +230,7 @@ def mat_to_graph(row_idx, col_idx, mat):
     
 
 
-def pagerank_scipy(G, sim_mat,  personal_vec=None, alpha=0.85, beta=0.01,
+def pagerank_scipy(G, sim_mat, re_mat, personal_vec=None, alpha=0.85, beta=0.01, beta_re=0.01,
                    max_iter=500, tol=1.0e-6, weight='weight',
                    dangling=None):
     
@@ -250,7 +250,7 @@ def pagerank_scipy(G, sim_mat,  personal_vec=None, alpha=0.85, beta=0.01,
 
     # 遷移行列とsim_matを統合
     #sim_mat = mk_sparse_sim_mat(G, item_mat)
-    M = beta * M + (1 - beta) * sim_mat
+    M = (beta + beta_re) * M + (1 - beta) * sim_mat + (1 - beta_re) * re_mat
     
     # initial vector
     x = scipy.repeat(1.0 / N, N)
@@ -307,7 +307,7 @@ def power_iterate(N, M, x, p, dangling_weights, is_dangling, alpha, max_iter=500
     return x
 
 
-def item_ppr(sim_mat, alpha, beta):
+def item_ppr(sim_mat, re_mat, alpha, beta, beta_re):
     
     # personal_vecを作る(eneity_size * user_size)
     user_idx = [dataset.entity_list.index(u) for u in dataset.user_list]
@@ -319,7 +319,7 @@ def item_ppr(sim_mat, alpha, beta):
     personal_vec = np.concatenate(personal_vec, axis=0).transpose()
     
     #ppr = pagerank_torch(G, sim_mat, personal_vec, alpha, beta)
-    ppr = pagerank_scipy(G, sim_mat, personal_vec, alpha, beta)
+    ppr = pagerank_scipy(G, sim_mat, re_mat, personal_vec, alpha, beta, beta_re)
     
     item_idx = [dataset.entity_list.index(i) for i in dataset.item_list]
     pred = ppr[:, item_idx]
@@ -328,11 +328,11 @@ def item_ppr(sim_mat, alpha, beta):
 
 
 
-def get_ranking_mat(model, gamma, alpha=0.85, beta=0.01):
+def get_ranking_mat(model, gamma, alpha=0.85, beta=0.01, beta_re=0.01):
     ranking_mat = []
-    #sim_mat = reconstruct_kg(model)
+    re_mat = reconstruct_kg(model)
     sim_mat = mk_sparse_sim_mat(model, gamma)
-    pred = item_ppr(sim_mat, alpha, beta)
+    pred = item_ppr(sim_mat, re_mat, alpha, beta, beta_re)
     #print(pred.shape)
     for i in range(len(dataset.user_list)):
         sorted_idx = np.argsort(np.array(pred[i]))[::-1]
@@ -375,12 +375,13 @@ def objective(trial):
 
     alpha = trial.suggest_uniform('alpha', 0, 0.5)
     beta = trial.suggest_uniform('beta', 0, 0.5)
+    beta_re = trial.suggest_uniform('beta_re', 0, 1)
     gamma1 = trial.suggest_uniform('gamma1', 0, 1)
     gamma2 = trial.suggest_uniform('gamma2', 0, 1)
     gamma3 = trial.suggest_uniform('gamma3', 0, 1)
     gamma = [gamma1, gamma2, gamma3]
     
-    ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
+    ranking_mat = get_ranking_mat(model, gamma, alpha, beta, beta_re)
     score = topn_precision(ranking_mat, user_items_test_dict)
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
@@ -391,16 +392,16 @@ def objective(trial):
 
 if __name__ == '__main__':
     # ハイパラ
-    kgembed_param = pickle.load(open('./best_param_TransE.pickle', 'rb'))
+    kgembed_param = pickle.load(open('./best_param_SparseTransE.pickle', 'rb'))
     print(kgembed_param)
 
-    model = train_embed(kgembed_param, 'TransE')
+    model = train_embed(kgembed_param, 'SparseTransE')
 
     #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result/hyparams_result_gamma_TransE.csv')
-    with open('./result/best_param_gamma_TransE.pickle', 'wb') as f:
+    df.to_csv('./result/hyparams_result_gamma_SparseTransE_re.csv')
+    with open('./result/best_param_gamma_SparseTransE_re.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)

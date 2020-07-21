@@ -25,9 +25,13 @@ warnings.filterwarnings('ignore')
 
 
 # dataload
-data_dir = '../data'
+data_dir = '../data_luxury_5core'
 dataset = AmazonDataset(data_dir, model_name='SparseTransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+# user-itemとitem-userどちらの辺も追加
+for r in dataset.triplet_df.values:
+    if r[2] == 0:
+        edges.append([r[1], r[0]])
 user_items_test_dict = pickle.load(open(data_dir + '/user_items_test_dict.pickle', 'rb'))
 
 

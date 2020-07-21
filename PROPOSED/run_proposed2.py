@@ -28,6 +28,10 @@ warnings.filterwarnings('ignore')
 data_dir = './data'
 dataset = AmazonDataset(data_dir, model_name='SparseTransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+# user-itemとitem-userどちらの辺も追加
+for r in dataset.triplet_df.values:
+    if r[2] == 0:
+        edges.append([r[1], r[0]])
 user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
 
 
@@ -392,7 +396,7 @@ if __name__ == '__main__':
     #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=60)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./result/hyparams_result_gamma_SparseTransE.csv')
     with open('./result/best_param_gamma_SparseTransE.pickle', 'wb') as f:

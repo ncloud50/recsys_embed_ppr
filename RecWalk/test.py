@@ -16,25 +16,29 @@ warnings.filterwarnings('ignore')
 
 
 # dataload
-slim_train = pd.read_csv('../data/bpr/user_item_train.csv')
-triplet_df = pd.read_csv('../data/triplet.csv')
+slim_train = pd.read_csv('../data_luxury_5core/bpr/user_item_train.csv')
+triplet_df = pd.read_csv('../data_luxury_5core/triplet.csv')
 edges = [[r[0], r[1]] for r in triplet_df.values]
+# user-itemとitem-userどちらの辺も追加
+for r in triplet_df.values:
+    if r[2] == 0:
+        edges.append([r[1], r[0]])
 
 user_list = []
 item_list = []
 entity_list = []
-with open('../data/user_list.txt', 'r') as f:
+with open('../data_luxury_5core/user_list.txt', 'r') as f:
     for l in f:
         user_list.append(l.replace('\n', ''))
-with open('../data/item_list.txt', 'r') as f:
+with open('../data_luxury_5core/item_list.txt', 'r') as f:
     for l in f:
         item_list.append(l.replace('\n', ''))
-with open('../data/entity_list.txt', 'r') as f:
+with open('../data_luxury_5core/entity_list.txt', 'r') as f:
     for l in f:
         entity_list.append(l.replace('\n', ''))
 
 
-user_items_test_dict = pickle.load(open('../data/user_items_test_dict.pickle', 'rb'))
+user_items_test_dict = pickle.load(open('../data_luxury_5core/user_items_test_dict.pickle', 'rb'))
 
 def load_params():
     return pickle.load(open('result/best_param4.pickle', 'rb'))
