@@ -396,7 +396,7 @@ if __name__ == '__main__':
     #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=60)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./result/hyparams_result_gamma_SparseTransE.csv')
     with open('./result/best_param_gamma_SparseTransE.pickle', 'wb') as f:

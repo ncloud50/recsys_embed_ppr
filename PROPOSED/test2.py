@@ -25,7 +25,7 @@ warnings.filterwarnings('ignore')
 
 
 # dataload
-data_dir = '../data'
+data_dir = '../data_luxury_5core'
 dataset = AmazonDataset(data_dir, model_name='SparseTransE')
 edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
 # user-itemとitem-userどちらの辺も追加
