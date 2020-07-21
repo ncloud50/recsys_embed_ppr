@@ -19,6 +19,10 @@ warnings.filterwarnings('ignore')
 slim_train = pd.read_csv('./data2/user_item_train_slim.csv')
 triplet_df = pd.read_csv('./data2/triplet.csv')
 edges = [[r[0], r[1]] for r in triplet_df.values]
+# user-itemとitem-userどちらの辺も追加
+for r in triplet_df.values:
+    if r[2] == 0:
+        edges.append([r[1], r[0]])
 
 user_list = []
 item_list = []
