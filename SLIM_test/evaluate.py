@@ -29,7 +29,8 @@ class Evaluater():
         #print(user_items_test_dict[target_user_id])
         hit = len(set(topn_idx) & set(self.user_items_dict[target_user_id]))
     
-        precision = hit / len(self.user_items_dict[target_user_id])
+        #precision = hit / len(self.user_items_dict[target_user_id])
+        precision = hit / n
         # precision_sum += precision
                 
         return precision

@@ -355,7 +355,8 @@ def topn_precision(ranking_mat, user_items_dict, n=10):
         sorted_idx = ranking_mat[i]
         topn_idx = sorted_idx[:n]  
         hit = len(set(topn_idx) & set(user_items_dict[user_idx[i]]))
-        precision = hit / len(user_items_dict[user_idx[i]])
+        #precision = hit / len(user_items_dict[user_idx[i]])
+        precision = hit / n
         precision_sum += precision
         
     return precision_sum / (len(user_idx) - not_count)

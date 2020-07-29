@@ -54,7 +54,8 @@ class Evaluater():
                 # topnにtarget userの推薦アイテムがいくつ含まれているか
                 topn_idx = sorted_idx[:n]
                 hit = len(set(topn_idx) & set(self.dataset.user_items_test_dict[i]))
-                precision = hit / len(self.dataset.user_items_test_dict[i])
+                #precision = hit / len(self.dataset.user_items_test_dict[i])
+                precision = hit / n
                 precision_sum += precision
 
         return precision_sum / (len(self.dataset.user_list) - not_count)
