@@ -20,7 +20,56 @@ class Evaluater():
         self.dataset = dataloader.AmazonDataset(data_dir)
 
         
+    def predict(self, model, i):
+        # user-itemの組に対して予測
+
+        precision_sum = 0
+        not_count = 0
+        with torch.no_grad():
+
+            batch_size = 512
+            item_index = [i for i in range(len(self.dataset.item_list))]
+
+            pred = torch.tensor([], device=device)
+            for j in range(int(len(self.dataset.item_list) / batch_size) + 1):
+                # modelにuser,itemを入力
+                # batchでやると速い
+                user_tensor = torch.tensor([i for k in range(batch_size)], dtype=torch.long, device=device)
+                item_tensor = torch.tensor(item_index[j*batch_size : (j+1)*batch_size],
+                                            dtype=torch.long, device=device)
+
+                if len(user_tensor) > len(item_tensor):
+                    user_tensor = torch.tensor([i for k in range(len(item_tensor))],
+                                            dtype=torch.long, device=device)
+
+                pred = torch.cat([pred, model.predict(user_tensor, item_tensor)])
+
+            # 予測をソート
+            sorted_idx = np.argsort(np.array(pred.cpu()))[::-1]
+
+            return sorted_idx
+
+
+
     def topn_precision(self, model, n=10):
+        for i in range(len(self.dataset.user_list)):
+            if len(self.dataset.user_items_test_dict[i]) == 0:
+                not_count += 1
+                continue
+
+            sorted_idx = self.predict(model, i)
+            # topnにtarget userの推薦アイテムがいくつ含まれているか
+            topn_idx = sorted_idx[:n]
+            hit = len(set(topn_idx) & set(self.dataset.user_items_test_dict[i]))
+            #precision = hit / len(self.dataset.user_items_test_dict[i])
+            precision = hit / n
+            precision_sum += precision
+
+        return precision_sum / (len(self.dataset.user_list) - not_count)
+
+    
+
+    def _topn_precision(self, model, n=10):
         # user-itemの組に対して予測
 
         precision_sum = 0
@@ -62,4 +111,24 @@ class Evaluater():
 
 
     def topn_recall(self, model, n=10):
+        for i in range(len(self.dataset.user_list)):
+            if len(self.dataset.user_items_test_dict[i]) == 0:
+                not_count += 1
+                continue
+
+            sorted_idx = self.predict(model, i)
+            # topnにtarget userの推薦アイテムがいくつ含まれているか
+            topn_idx = sorted_idx[:n]
+            hit = len(set(topn_idx) & set(self.dataset.user_items_test_dict[i]))
+            recall = hit / len(self.dataset.user_items_test_dict[i])
+            recall_sum += recall
+
+        return recall_sum / (len(self.dataset.user_list) - not_count)
+    
+
+    def topn_map(self, model):
+        return 0
+
+
+    def topn_ndcg(self, model):
         return 0
