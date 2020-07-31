@@ -20,7 +20,70 @@ class Evaluater():
         self.model_name = model_name
 
         
+    def predict(self, model, u_idx):
+        # user-itemの組に対して予測
+
+        with torch.no_grad():
+
+            batch_size = 512
+            item_index = [i for i in range(len(self.dataset.item_list))]
+
+            pred = torch.tensor([], device=device)
+            for j in range(int(len(self.dataset.item_list) / batch_size) + 1):
+                # modelにuser,itemを入力
+                # batchでやると速い
+                user_tensor = torch.tensor([u_idx for k in range(batch_size)], dtype=torch.long, device=device)
+                item_tensor = torch.tensor(item_index[j*batch_size : (j+1)*batch_size],
+                                            dtype=torch.long, device=device)
+                ### user ->(buy) itemはrelationが0であることに注意 ###
+                relation_tensor = torch.tensor([0 for k in range(batch_size)], dtype=torch.long, device=device)
+
+                if len(user_tensor) > len(item_tensor):
+                    user_tensor = torch.tensor([u_idx for k in range(len(item_tensor))],
+                                            dtype=torch.long, device=device)
+                    relation_tensor = torch.tensor([0 for k in range(len(item_tensor))],
+                                                    dtype=torch.long, device=device)
+
+                pred = torch.cat([pred, model.predict(user_tensor, item_tensor, relation_tensor)])
+
+            # 予測をソート
+            ### item_idxは0~len(item_list)-1 なのでこれでOK
+            ### item_idxがentity_listの途中から始まっている場合は別
+            sorted_idx = np.argsort(np.array(pred.cpu()))[::-1]
+
+            return sorted_idx
+
+
     def topn_precision(self, model, n=10):
+        precision_sum = 0
+        not_count = 0
+        for i in range(len(self.dataset.user_list)):
+            if len(self.dataset.user_items_test_dict[i]) == 0:
+                not_count += 1
+                continue
+
+            sorted_idx = self.predict(model, i)
+            # topnにtarget userの推薦アイテムがいくつ含まれているか
+            #topn_idx = sorted_idx[:n]
+            #hit = len(set(topn_idx) & set(self.dataset.user_items_test_dict[i]))
+            #precision = hit / len(self.dataset.user_items_test_dict[i])
+            #precision = hit / n
+            precision = self.__topn_precision(sorted_idx, n, i)
+            precision_sum += precision
+
+        return precision_sum / (len(self.dataset.user_list) - not_count)
+
+
+    def __topn_precision(self, sorted_idx, n, user):
+        # topnにtarget userの推薦アイテムがいくつ含まれているか
+        topn_idx = sorted_idx[:n]
+        hit = len(set(topn_idx) & set(self.dataset.user_items_test_dict[user]))
+        #precision = hit / len(self.dataset.user_items_test_dict[i])
+        precision = hit / n
+        return precision
+
+
+    def test_topn_precision(self, model, n=10):
         # user-itemの組に対して予測
 
         precision_sum = 0
