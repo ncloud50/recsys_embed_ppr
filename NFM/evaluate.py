@@ -23,8 +23,6 @@ class Evaluater():
     def predict(self, model, u_idx):
         # user-itemの組に対して予測
 
-        precision_sum = 0
-        not_count = 0
         with torch.no_grad():
 
             batch_size = 512
