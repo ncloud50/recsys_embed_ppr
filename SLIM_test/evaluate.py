@@ -36,7 +36,7 @@ class Evaluater():
         return precision
 
     def topn_map(self, sorted_idx, user):
-        map_sum = 0
+        mean_avg_pre = 0
         not_count = 0
         if len(self.user_items_dict[user]) == 0:
             return 2
@@ -47,9 +47,7 @@ class Evaluater():
             precision = self.topn_precision(sorted_idx, user, n)
             precision_sum += precision
         
-        map_sum += precision_sum / len(self.user_items_dict[user])
-
-        return map_sum
+        return precision_sum / len(self.user_items_dict[user])
     
     
     def topn_recall(n=10):

@@ -241,7 +241,8 @@ def objective(trial):
     evaluater = Evaluater('../data_luxury_5core')
     ranking_mat = get_ranking_mat(slim, alpha, beta)
     #score = topn_precision(ranking_mat, user_items_test_dict)
-    score = evaluater.topn_precision(ranking_mat)
+    #score = evaluater.topn_precision(ranking_mat)
+    score = evaluater.topn_map(ranking_mat)
     
     mi, sec = time_since(time.time() - start)
     print('{}m{}s'.format(mi, sec))
