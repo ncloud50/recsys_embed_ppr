@@ -130,7 +130,7 @@ class TrainIterater():
                 
     def iterate_epoch(self, model, lr, epoch, weight_decay=0, 
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5):
-        eval_model = Evaluater(self.data_dir, model_name=self.model_name)
+        #eval_model = Evaluater(self.data_dir, model_name=self.model_name)
         plot_loss_list = []
         plot_score_list = []
                           
@@ -150,7 +150,7 @@ class TrainIterater():
         self._plot(plot_loss_list)
         self._plot(plot_score_list)
         
-        return eval_model.topn_precision(model)
+        #return eval_model.topn_precision(model)
 
 
     def _plot(self, loss_list):

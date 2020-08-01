@@ -63,7 +63,7 @@ def train_embed(params, model_name):
     elif model_name == 'SparseTransE':
         model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
-    score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
+    iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     return model
 
@@ -382,7 +382,9 @@ def objective(trial):
     gamma = [gamma1, gamma2, gamma3]
     
     ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
-    score = topn_precision(ranking_mat, user_items_test_dict)
+    #score = topn_precision(ranking_mat, user_items_test_dict)
+    evaluater = Evaluater('./data')
+    score = evaluater.topn_map(ranking_mat)
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
     print(score)
@@ -395,7 +397,10 @@ if __name__ == '__main__':
     kgembed_param = pickle.load(open('./best_param_TransE.pickle', 'rb'))
     print(kgembed_param)
 
+    start = time.time()
     model = train_embed(kgembed_param, 'TransE')
+    mi, sec = time_since(time.time() - start)
+    print(mi, sec)
 
     #model = pickle.load(open('model.pickle', 'rb'))
 
