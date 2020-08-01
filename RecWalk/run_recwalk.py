@@ -11,6 +11,8 @@ from SLIM_model import SLIM
 import optuna
 import time
 
+from evaluate import Evaluater
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -169,15 +171,15 @@ def item_ppr(sim_mat, user, alpha, beta):
     personal_vec = dict(zip(k, val))
     #print(personal_vec)
     #ppr = pagerank_numpy(G, slim.sim_mat, alpha, beta, personalization=personal_vec)
-    ppr = pagerank_scipy(G, sim_mat, alpha, beta, personalization=personal_vec)
+    #ppr = pagerank_scipy(G, sim_mat, alpha, beta, personalization=personal_vec)
     #return pr
     
     # random 後で消す
     # val = np.random.dirichlet([1 for i in range(len(G.nodes))], 1)[0]
-    #val = np.random.rand(len(G.nodes()))
-    #val /= val.sum()
-    #k = [i for i in range(len(G.nodes))]
-    #ppr = dict(zip(k, val))
+    val = np.random.rand(len(G.nodes()))
+    val /= val.sum()
+    k = [i for i in range(len(G.nodes))]
+    ppr = dict(zip(k, val))
     
     pred = []
     item_idx = [entity_list.index(i) for i in item_list]
@@ -236,8 +238,10 @@ def objective(trial):
     alpha = trial.suggest_uniform('alpha', 0, 1)
     beta = trial.suggest_uniform('beta', 0, 0.5)
 
+    evaluater = Evaluater('../data_luxury_5core')
     ranking_mat = get_ranking_mat(slim, alpha, beta)
-    score = topn_precision(ranking_mat, user_items_test_dict)
+    #score = topn_precision(ranking_mat, user_items_test_dict)
+    score = evaluater.topn_precision(ranking_mat)
     
     mi, sec = time_since(time.time() - start)
     print('{}m{}s'.format(mi, sec))
@@ -250,6 +254,7 @@ def time_since(runtime):
     return (mi, sec)
 
 if __name__ == '__main__':
+
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式

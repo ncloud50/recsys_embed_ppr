@@ -26,7 +26,7 @@ class Evaluater():
         with torch.no_grad():
 
             batch_size = 512
-            item_index = [i for i in range(len(self.dataset.item_list))]
+            item_index = [self.dataset.entity_list.index(item) for item in self.dataset.item_list]
 
             pred = torch.tensor([], device=device)
             for j in range(int(len(self.dataset.item_list) / batch_size) + 1):
@@ -57,7 +57,8 @@ class Evaluater():
     def topn_precision(self, model, n=10):
         precision_sum = 0
         not_count = 0
-        for i in range(len(self.dataset.user_list)):
+        user_idx = [self.dataset.entity_list.index(user) for user in self.dataset.user_list]
+        for i in user_idx:
             if len(self.dataset.user_items_test_dict[i]) == 0:
                 not_count += 1
                 continue
@@ -81,6 +82,28 @@ class Evaluater():
         #precision = hit / len(self.dataset.user_items_test_dict[i])
         precision = hit / n
         return precision
+
+
+    def topn_map(self, model):
+        map_sum = 0
+        not_count = 0
+        user_idx = [self.dataset.entity_list.index(user) for user in self.dataset.user_list]
+        for i in user_idx:
+            if len(self.dataset.user_items_test_dict[i]) == 0:
+                not_count += 1
+                continue
+
+            sorted_idx = self.predict(model, i)
+
+            precision_sum = 0
+            for j in self.dataset.user_items_test_dict[i]:
+                n = list(sorted_idx).index(j) + 1
+                precision = self.__topn_precision(sorted_idx, n, i)
+                precision_sum += precision
+            
+            map_sum += precision_sum / len(self.dataset.user_items_test_dict[i])
+
+        return map_sum / (len(self.dataset.user_list) - not_count)
 
 
     def test_topn_precision(self, model, n=10):

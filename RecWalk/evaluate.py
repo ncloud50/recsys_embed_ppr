@@ -2,27 +2,34 @@ import pandas as pd
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.linear_model import ElasticNet, Ridge, Lasso
-
+from dataloader import AmazonDataset
 
 class Evaluater():
     
     
-    def __init__(self, user_item_test_df, user_num):
-        self.user_num = user_num
-        self.user_items_dict = self.user_aggregate_item(user_item_test_df)
+    def __init__(self, data_dir):
+        #self.user_num = user_num
+        self.dataset = AmazonDataset(data_dir=data_dir) 
             
-    def user_aggregate_item(self, df):
-        user_items_dict = {}
-        #for user in user_list:
-        for i in range(self.user_num):
-            items_df = df[df['reviewerID'] == i]
-            user_items_dict[i] = list(items_df['asin'])
-        return user_items_dict
     
-    def topn_precision(self, sorted_idx, target_user_id, n=10):
+    def topn_precision(self, ranking_mat):
+        user_idx = [self.dataset.entity_list.index(u) for u in self.dataset.user_list]
+        not_count = 0
+        precision_sum = 0
+        for i in range(len(user_idx)):
+            if len(self.dataset.user_items_test_dict[user_idx[i]]) == 0:
+                not_count += 1
+                continue
 
-        if len(self.user_items_dict[target_user_id]) == 0:
-            return 2
+            precision = self.__topn_precision(ranking_mat[i], user_idx[i])
+            precision_sum += precision
+            
+        return precision_sum / (len(self.dataset.user_list) - not_count)
+
+
+    def __topn_precision(self, sorted_idx, target_user_id, n=10):
+
+        #if len(self.user_items_dict[target_user_id]) == 0:
         
         topn_idx = sorted_idx[:n]   
         #print(topn_idx)
@@ -34,6 +41,7 @@ class Evaluater():
         # precision_sum += precision
                 
         return precision
+
 
     def topn_map(self, sorted_idx, user):
         map_sum = 0
