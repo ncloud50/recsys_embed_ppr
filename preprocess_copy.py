@@ -196,7 +196,7 @@ def mk_valid(dir, train_df, test_df):
 
 
     # trainデータに対するtargetを作る
-    y_train = np.array([1 for i in range(len(triplet_df))] + [0 for i in range(len(nega_triplet_df))])
+    y_train = np.array([1 for i in range(len(_triplet_df))] + [0 for i in range(len(_nega_triplet_df))])
     #保存
     np.savetxt(dir + '/y_train.txt', y_train)
 
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
 
     # trainデータに対するtargetを作る
-    y_train = np.array([1 for i in range(len(triplet_df))] + [0 for i in range(len(nega_triplet_df))])
+    y_train = np.array([1 for i in range(len(_triplet_df))] + [0 for i in range(len(nega_triplet_df))])
     #保存
     np.savetxt(dir_test + 'y_train.txt', y_train)
 
