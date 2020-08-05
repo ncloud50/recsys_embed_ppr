@@ -1,6 +1,6 @@
 from dataloader import AmazonDataset
 import models
-from models import DistMulti, TransE, SparseTransE
+from models import DistMulti, TransE, SparseTransE, Complex
 from training import TrainIterater
 from evaluate import Evaluater
 
@@ -23,7 +23,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # kg embed model
 #model_name = 'TransE'
 
-model_name = 'SparseTransE'
+model_name = 'Complex'
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -40,7 +40,7 @@ def objective(trial):
 
     # hyper para
     embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
-    alpha = trial.suggest_loguniform('alpha', 1e-6, 1e-2) #SparseTransEの時だけ
+    #alpha = trial.suggest_loguniform('alpha', 1e-6, 1e-2) #SparseTransEの時だけ
     batch_size = trial.suggest_int('batch_size', 128, 512, 128)
     lr= trial.suggest_loguniform('lr', 1e-4, 1e-2)
     weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2)
@@ -53,17 +53,14 @@ def objective(trial):
 
     for dir_path in data_dir:
     # データ読み込み
-        dataset = AmazonDataset(dir_path, model_name='SparseTransE')
-        print(len(dataset.triplet_df))
-
-
+        dataset = AmazonDataset(dir_path, model_name=model_name)
         relation_size = len(set(list(dataset.triplet_df['relation'].values)))
         entity_size = len(dataset.entity_list)
-        model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
-        iterater = TrainIterater(batch_size=int(batch_size), data_dir=dir_path, model_name='SparseTransE')
+        model = Complex(int(embedding_dim), relation_size, entity_size).to(device)
+        iterater = TrainIterater(batch_size=int(batch_size), data_dir=dir_path, model_name=model_name)
         
         score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
-                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=5)
+                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=100)
 
         score_sum += score 
     
@@ -79,6 +76,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=1)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('.result_beauty/hyparams_result_SparseTransE.csv')
-    with open('./result_beauty/best_param_SparseTransE.pickle', 'wb') as f:
+    df.to_csv('.result_beauty/hyparams_result_Complex.csv')
+    with open('./result_beauty/best_param_Complex.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)

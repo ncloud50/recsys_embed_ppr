@@ -88,7 +88,7 @@ class TrainIterater():
         plot_loss_list = []
         plot_loss_total = 0
 
-        if self.model_name == 'DistMulti':
+        if self.model_name == 'DistMulti' or self.model_name == 'Complex':
             train_num = len(self.dataset.triplet_df) + len(self.dataset.nega_triplet_df)
         elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
             train_num = len(self.dataset.triplet_df)
@@ -136,7 +136,7 @@ class TrainIterater():
                           
         for i in range(epoch):
             plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay, 
-                                                       print_every=10000))
+                                                       print_every=100))
             
             # lrスケジューリング
             if i > warmup:

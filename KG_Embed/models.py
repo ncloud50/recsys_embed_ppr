@@ -173,7 +173,7 @@ class SparseTransE(nn.Module):
 class Complex(nn.Module):
 
     def __init__(self, embedding_dim, relation_size, entity_size):
-        super(DistMulti, self).__init__()
+        super(Complex, self).__init__()
         self.embedding_dim = embedding_dim
         self.entity_re = nn.Embedding(entity_size, embedding_dim)
         self.relation_re = nn.Embedding(relation_size, embedding_dim)
@@ -189,7 +189,7 @@ class Complex(nn.Module):
         tail_im = self.entity_im(tail)
         relation_im = self.relation_im(relation)
         
-        score = torch.sum(realation_re, head_re * tail_re, axis=1) \
+        score = torch.sum(relation_re, head_re * tail_re, axis=1) \
                 + torch.sum(relation_re, head_im * tail_im,  axis=1) \
                 + torch.sum(relation_im, head_re * tail_im,  axis=1) \
                 - torch.sum(relation_im, head_im * tail_re,  axis=1)
