@@ -27,7 +27,7 @@ class TrainIterater():
     def train(self, batch, loss_func, optimizer, model):
         optimizer.zero_grad()
 
-        if self.model_name == 'DistMulti':
+        if self.model_name == 'DistMulti' or self.model_name == 'Complex':
             triplet, y_train = batch
             h_entity_tensor = torch.tensor(triplet[:, 0], dtype=torch.long, device=device)
             t_entity_tensor = torch.tensor(triplet[:, 1], dtype=torch.long, device=device)
@@ -136,7 +136,7 @@ class TrainIterater():
                           
         for i in range(epoch):
             plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay, 
-                                                       print_every=100))
+                                                       print_every=10000))
             
             # lrスケジューリング
             if i > warmup:

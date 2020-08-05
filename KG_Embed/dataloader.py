@@ -70,7 +70,7 @@ class AmazonDataset:
 
     def get_batch(self, batch_size=2):
 
-        if self.model_name == 'DistMulti':
+        if self.model_name == 'DistMulti' or self.model_name == 'Complex':
             train_num = len(self.triplet_df) + len(self.nega_triplet_df)
             batch_idx = np.random.permutation(train_num)[:batch_size]
             # posi_tripletとnega_tripletを連結

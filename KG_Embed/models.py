@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-device='cpu'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DistMulti(nn.Module):
 
@@ -169,3 +169,48 @@ class SparseTransE(nn.Module):
 
         return pred
     
+
+class Complex(nn.Module):
+
+    def __init__(self, embedding_dim, relation_size, entity_size):
+        super(DistMulti, self).__init__()
+        self.embedding_dim = embedding_dim
+        self.entity_re = nn.Embedding(entity_size, embedding_dim)
+        self.relation_re = nn.Embedding(relation_size, embedding_dim)
+        self.entity_im = nn.Embedding(entity_size, embedding_dim)
+        self.relation_im = nn.Embedding(relation_size, embedding_dim)
+        
+        
+    def forward(self, head, tail, relation):
+        head_re = self.entity_re(head)
+        tail_re = self.entity_re(tail)
+        relation_re = self.relation_re(relation)
+        head_im = self.entity_im(head)
+        tail_im = self.entity_im(tail)
+        relation_im = self.relation_im(relation)
+        
+        score = torch.sum(realation_re, head_re * tail_re, axis=1) \
+                + torch.sum(relation_re, head_im * tail_im,  axis=1) \
+                + torch.sum(relation_im, head_re * tail_im,  axis=1) \
+                - torch.sum(relation_im, head_im * tail_re,  axis=1)
+
+        score = torch.sigmoid(score)
+        
+        return score
+    
+    def predict(self, head, tail, relation):
+        head_re = self.entity_re(head)
+        tail_re = self.entity_re(tail)
+        relation_re = self.relation_re(relation)
+        head_im = self.entity_im(head)
+        tail_im = self.entity_im(tail)
+        relation_im = self.relation_im(relation)
+        
+        score = torch.sum(realation_re, head_re * tail_re, axis=1) \
+                + torch.sum(relation_re, head_im * tail_im,  axis=1) \
+                + torch.sum(relation_im, head_re * tail_im,  axis=1) \
+                - torch.sum(relation_im, head_im * tail_re,  axis=1)
+
+        score = torch.sigmoid(score)
+        
+        return score

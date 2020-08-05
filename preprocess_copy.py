@@ -220,15 +220,15 @@ def mk_valid(dir, train_df, test_df):
 
 if __name__ == '__main__':
     # 保存ディレクトリ
-    dir_test = './data_beauty_2core/test/'
-    dir_valid1 = './data_beauty_2core/valid1/'
-    dir_valid2 = './data_beauty_2core/valid2/'
+    dir_test = './data_luxury_5core/test/'
+    dir_valid1 = './data_luxury_5core/valid1/'
+    dir_valid2 = './data_luxury_5core/valid2/'
 
     # データ読み込み
-    user_item_df = pd.read_csv('./All_Beauty_2core/user_item.csv')
-    item_brand_df = pd.read_csv('./All_Beauty_2core/item_brand.csv')
-    item_buy_item_df = pd.read_csv('./All_Beauty_2core/item_buy_item.csv')
-    item_view_item_df = pd.read_csv('./All_Beauty_2core/item_view_item.csv')
+    user_item_df = pd.read_csv('./Luxury_5core/user_item.csv')
+    item_brand_df = pd.read_csv('./Luxury_5core/item_brand.csv')
+    item_buy_item_df = pd.read_csv('./Luxury_5core/item_buy_item.csv')
+    item_view_item_df = pd.read_csv('./Luxury_5core/item_view_item.csv')
 
     entity_type = ['user', 'item', 'brand']
     relation_type = ['u_buy_i', 'i_belong_b', 'i_also_buy_i', 'i_also_view_i']
