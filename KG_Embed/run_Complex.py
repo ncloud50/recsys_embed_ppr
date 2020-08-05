@@ -24,6 +24,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #model_name = 'TransE'
 
 model_name = 'Complex'
+#model_name = 'DistMulti'
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -57,6 +58,7 @@ def objective(trial):
         relation_size = len(set(list(dataset.triplet_df['relation'].values)))
         entity_size = len(dataset.entity_list)
         model = Complex(int(embedding_dim), relation_size, entity_size).to(device)
+        #model = DistMulti(int(embedding_dim), relation_size, entity_size).to(device)
         iterater = TrainIterater(batch_size=int(batch_size), data_dir=dir_path, model_name=model_name)
         
         score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,

@@ -189,10 +189,10 @@ class Complex(nn.Module):
         tail_im = self.entity_im(tail)
         relation_im = self.relation_im(relation)
         
-        score = torch.sum(relation_re, head_re * tail_re, axis=1) \
-                + torch.sum(relation_re, head_im * tail_im,  axis=1) \
-                + torch.sum(relation_im, head_re * tail_im,  axis=1) \
-                - torch.sum(relation_im, head_im * tail_re,  axis=1)
+        score = torch.sum(relation_re * head_re * tail_re, axis=1) \
+                + torch.sum(relation_re * head_im * tail_im,  axis=1) \
+                + torch.sum(relation_im * head_re * tail_im,  axis=1) \
+                - torch.sum(relation_im * head_im * tail_re,  axis=1)
 
         score = torch.sigmoid(score)
         
@@ -206,10 +206,10 @@ class Complex(nn.Module):
         tail_im = self.entity_im(tail)
         relation_im = self.relation_im(relation)
         
-        score = torch.sum(realation_re, head_re * tail_re, axis=1) \
-                + torch.sum(relation_re, head_im * tail_im,  axis=1) \
-                + torch.sum(relation_im, head_re * tail_im,  axis=1) \
-                - torch.sum(relation_im, head_im * tail_re,  axis=1)
+        score = torch.sum(relation_re * head_re * tail_re, axis=1) \
+                + torch.sum(relation_re * head_im * tail_im,  axis=1) \
+                + torch.sum(relation_im * head_re * tail_im,  axis=1) \
+                - torch.sum(relation_im * head_im * tail_re,  axis=1)
 
         score = torch.sigmoid(score)
         
