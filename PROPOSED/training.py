@@ -147,8 +147,8 @@ class TrainIterater():
                 plot_score_list.append(score)
                 #print('epoch: {}  precision: {}'.format(i, score))
         
-        self._plot(plot_loss_list)
-        self._plot(plot_score_list)
+        #self._plot(plot_loss_list)
+        #self._plot(plot_score_list)
         
         #return eval_model.topn_precision(model)
 
