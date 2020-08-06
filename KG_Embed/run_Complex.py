@@ -77,6 +77,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('.result_luxury/hyparams_result_Complex.csv')
+    df.to_csv('./result_luxury/hyparams_result_Complex.csv')
     with open('./result_luxury/best_param_Complex.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
