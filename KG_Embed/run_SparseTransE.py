@@ -35,7 +35,7 @@ def objective(trial):
     import gc
     gc.collect()
 
-    data_dir = ['../data_beauty_2core/valid1', '../data_beauty_2core/valid2']
+    data_dir = ['../data_luxury_5core/valid1', '../data_luxury_5core/valid2']
     score_sum = 0
 
     # hyper para
@@ -63,7 +63,7 @@ def objective(trial):
         iterater = TrainIterater(batch_size=int(batch_size), data_dir=dir_path, model_name='SparseTransE')
         
         score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
-                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=5)
+                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
 
         score_sum += score 
     
@@ -77,8 +77,8 @@ def objective(trial):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('.result_beauty/hyparams_result_SparseTransE.csv')
-    with open('./result_beauty/best_param_SparseTransE.pickle', 'wb') as f:
-        pickle.dump(study.best_params, f)
+    #df.to_csv('.result_beauty/hyparams_result_SparseTransE.csv')
+    #with open('./result_beauty/best_param_SparseTransE.pickle', 'wb') as f:
+    #    pickle.dump(study.best_params, f)
