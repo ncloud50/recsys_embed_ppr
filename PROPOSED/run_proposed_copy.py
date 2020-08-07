@@ -52,7 +52,7 @@ def train_embed(data_dir, params, model_name):
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
     #iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
     #                       lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
-    iterater.iterate_epoch(model, lr=lr, epoch=1, weight_decay=weight_decay, warmup=warmup,
+    iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     return model
 
@@ -414,6 +414,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result/hyparams_result_gamma_TransE.csv')
-    with open('./result/best_param_gamma_TransE.pickle', 'wb') as f:
+    df.to_csv('./result_luxury_2cross/hyparams_result_gamma_TransE_relu.csv')
+    with open('./result_luxury_2cross/best_param_gamma_TransE_relu.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
