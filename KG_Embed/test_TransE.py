@@ -25,7 +25,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_name = 'TransE'
 
 def load_params():
-    return pickle.load(open('./result/best_param.pickle', 'rb'))
+    return pickle.load(open('./result_luxury/best_param.pickle', 'rb'))
 
 def time_since(runtime):
     mi = int(runtime / 60)

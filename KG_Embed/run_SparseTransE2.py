@@ -62,7 +62,7 @@ def objective(trial):
         
         score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                             lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5, 
-                            early_stop=True)
+                            early_stop=False)
 
         score_sum += score 
     
@@ -78,6 +78,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=50)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result_luxury_2cross/hyparams_result_SparseTransE_es.csv')
-    with open('./result_luxury_2cross/best_param_SparseTransE_es.pickle', 'wb') as f:
+    df.to_csv('./result_luxury_2cross/hyparams_result_SparseTransE.csv')
+    with open('./result_luxury_2cross/best_param_SparseTransE.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)

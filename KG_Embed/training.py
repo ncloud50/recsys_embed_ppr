@@ -127,9 +127,9 @@ class TrainIterater():
 
 
     def iterate_epoch(self, model, lr, epoch, weight_decay=0,
-                      warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5):
+                      warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5, early_stop=False):
         eval_model = Evaluater(self.data_dir, model_name=self.model_name)
-        es = EarlyStop(self.data_dir, model_name, patience=3)
+        es = EarlyStop(self.data_dir, self.model_name, patience=3)
         plot_loss_list = []
         plot_score_list = []
 
@@ -138,10 +138,11 @@ class TrainIterater():
                                                        print_every=10000))
 
             # early stop
-            pre_model = es.early_stop(model):
-            if pre_model:
-                print('Early Stop eposh: {}'.format(i+1))
-                return eval_model.topn_map(pre_model)
+            if early_stop:
+                pre_model = es.early_stop(model)
+                if pre_model:
+                    print('Early Stop eposh: {}'.format(i+1))
+                    return eval_model.topn_map(pre_model)
 
             # lrスケジューリング
             if i > warmup:
@@ -216,22 +217,22 @@ class EarlyStop():
 
 
     def early_stop(self, model):
-        loss = self.iterate_valid_loss(model, batch_size=2)
+        loss = self.iterate_valid_loss(model, batch_size=1024)
         self.loss_list.append(loss)
         # model copy
         self.model_list.append(copy.deepcopy(model))
 
         flag = 0
         for i in range(len(self.loss_list) - 1):
-            if self.loss_list[i] >= self.loss_list[i + 1]:
+            if self.loss_list[0] > self.loss_list[i + 1]:
                 flag = 1
 
         if flag == 0 and len(self.loss_list) > self.patience:
-            return model_list[0]
+            return self.model_list[0]
 
         if len(self.loss_list) > self.patience:
-            loss_list.pop(0)
-            model_list.pop(0)
+            self.loss_list.pop(0)
+            self.model_list.pop(0)
 
         return False
 
@@ -284,12 +285,13 @@ class EarlyStop():
             train_num = len(self.dataset.user_item_test_df)
 
         for i in range(int(train_num / batch_size) + 1):
-
             batch = self.get_batch(batch_size=batch_size)
+            #print(batch)
             loss = self.valid_loss(batch, loss_func, model)
+            #print(loss)
             loss_total += loss.detach()
-            break
 
+        
         return loss_total / len(self.dataset.user_item_test_df)
 
 
