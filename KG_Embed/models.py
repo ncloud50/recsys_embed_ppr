@@ -132,20 +132,20 @@ class SparseTransE(nn.Module):
             reg_u = torch.zeros(2, 2)
         else:
             reg_u = self.entity_embed(reg_user)
+            reg_u = reg_u / torch.norm(reg_u, dim=1).view(reg_u.shape[0], -1)
 
         if len(reg_item) == 0:
             reg_i = torch.zeros(2, 2)
         else:
             reg_i = self.entity_embed(reg_item)
+            reg_i = reg_i / torch.norm(reg_i, dim=1).view(reg_i.shape[0], -1)
 
         if len(reg_brand) == 0:
             reg_b = torch.zeros(2, 2)
         else:
             reg_b = self.entity_embed(reg_brand)
+            reg_b = reg_b / torch.norm(reg_b, dim=1).view(reg_b.shape[0], -1)
 
-        reg_u = reg_u / torch.norm(reg_u, dim=1).view(reg_u.shape[0], -1)
-        reg_i = reg_i / torch.norm(reg_i, dim=1).view(reg_i.shape[0], -1)
-        reg_b = reg_b / torch.norm(reg_b, dim=1).view(reg_b.shape[0], -1)
         
         reg = torch.norm(torch.mm(reg_u, reg_u.T)) + torch.norm(torch.mm(reg_i, reg_i.T)) \
             + torch.norm(torch.mm(reg_b, reg_b.T))
