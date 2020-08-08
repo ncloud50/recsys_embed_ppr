@@ -50,30 +50,37 @@ class PPR_TransE(TransE):
 
         score = self.forward(head, tail, relation, n_head, n_tail, n_relation, 
                              reg_user, reg_item, reg_brand)
-        M = self.mk_sparse_sim_mat(self.kappa)
+        M = self.mk_sparse_sim_mat()
 
         # ここでpagerankに相当する計算
 
         #return score
 
         
-    def mk_sparse_sim_mat(self, kappa):
+    def mk_sparse_sim_mat(self):
 
         # ここもっと上手く書きたい
         item_embed = self.entity_embed(self.item_idx)
-        item_sim_mat = torch.mm(item_embed, torch.t(item_embed))
-        item_sim_mat = kappa[0] * scipy.sparse.csr_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
+        item_sim_mat = F.relu(torch.mm(item_embed, torch.t(item_embed)))
+        #item_sim_mat = self.kappa[0] * scipy.sparse.coo_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
 
         user_embed = self.entity_embed(self.user_idx)
-        user_sim_mat = torch.mm(user_embed, torch.t(user_embed))
-        user_sim_mat = kappa[1] * scipy.sparse.csr_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
+        user_sim_mat = F.relu(torch.mm(user_embed, torch.t(user_embed)))
+        #user_sim_mat = self.kappa[1] * scipy.sparse.coo_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
 
         brand_embed = self.entity_embed(self.brand_idx)
-        brand_sim_mat = torch.mm(brand_embed, torch.t(brand_embed))
-        brand_sim_mat = kappa[2] * scipy.sparse.csr_matrix(brand_sim_mat.to('cpu').detach().numpy().copy())
+        brand_sim_mat = F.relu(torch.mm(brand_embed, torch.t(brand_embed)))
+        #brand_sim_mat = self.kappa[2] * scipy.sparse.coo_matrix(brand_sim_mat.to('cpu').detach().numpy().copy())
 
-        M = scipy.sparse.block_diag((item_sim_mat, user_sim_mat, brand_sim_mat))
-        M_ = np.array(1 - M.sum(axis=1) / np.max(M.sum(axis=1)))
-                                        
-        M = M / np.max(M.sum(axis=1)) + scipy.sparse.diags(M_.transpose()[0])
-        return M
+        def normalize(M):
+            M_ = 1 - torch.sum(M, dim=1) / torch.max(torch.sum(M, dim=1))
+            print(M_.shape)
+            print(M.shape)
+            M = M / torch.max(torch.sum(M, dim=1)) + torch.diag(M_.T)
+            return M
+
+        item_sim_mat = normalize(item_sim_mat)
+        user_sim_mat = normalize(user_sim_mat)
+        brand_sim_mat = normalize(brand_sim_mat)
+
+        return item_sim_mat, user_sim_mat, brand_sim_mat
