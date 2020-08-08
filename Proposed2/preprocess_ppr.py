@@ -10,26 +10,27 @@ import optuna
 
 
 # データ読み込み
-triplet_df = pd.read_csv('./data/triplet.csv')
+data_dir = '../data_luxury_5core/valid1/'
+triplet_df = pd.read_csv(data_dir + 'triplet.csv')
 edges = [[r[0], r[1]] for r in triplet_df.values]
 
 entity_list = []
 user_list =[]
 item_list = []
-with open('./data/entity_list.txt', 'r') as f:
+with open(data_dir + 'entity_list.txt', 'r') as f:
     for l in f:
         entity_list.append(l.replace('\n', ''))
         
-with open('./data/user_list.txt', 'r') as f:
+with open(data_dir + 'user_list.txt', 'r') as f:
     for l in f:
         user_list.append(l.replace('\n', ''))
         
-with open('./data/item_list.txt', 'r') as f:
+with open(data_dir + 'item_list.txt', 'r') as f:
     for l in f:
         item_list.append(l.replace('\n', ''))
         
         
-user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
+user_items_test_dict = pickle.load(open(data_dir + 'user_items_test_dict.pickle', 'rb'))
 
 
 # グラフを作る
