@@ -24,21 +24,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-# dataload
-data_dir = './data2'
-dataset = AmazonDataset(data_dir, model_name='SparseTransE')
-edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
-user_items_test_dict = pickle.load(open('./data2/user_items_test_dict.pickle', 'rb'))
 
 
-# load network
-G = nx.DiGraph()
-G.add_nodes_from([i for i in range(len(dataset.entity_list))])
-G.add_edges_from(edges)
-
-
-def train_embed(params, model_name):
-    
+def train_embed(data_dir, params, model_name):
     # ハイパラ読み込み
     embedding_dim = params['embedding_dim']
     batch_size = params['batch_size']
@@ -52,6 +40,8 @@ def train_embed(params, model_name):
     if model_name == 'SparseTransE':
         alpha = params['alpha']
     
+    # dataload
+    dataset = AmazonDataset(data_dir, model_name='TransE')
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
     if model_name == 'TransE':
@@ -59,13 +49,15 @@ def train_embed(params, model_name):
     elif model_name == 'SparseTransE':
         model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
-    score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
+    #iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
+    #                       lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
+    iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     return model
 
 
 
-def mk_sparse_sim_mat(model, gamma):
+def mk_sparse_sim_mat(model, dataset, gamma):
     item_idx = torch.tensor([dataset.entity_list.index(i) for i in dataset.item_list], 
                         dtype=torch.long, device=device)
 
@@ -230,8 +222,6 @@ def pagerank_scipy(G, sim_mat,  personal_vec=None, alpha=0.85, beta=0.01,
                    max_iter=500, tol=1.0e-6, weight='weight',
                    dangling=None):
     
-    #import scipy.sparse
-
     N = len(G)
     if N == 0:
         return {}
@@ -303,7 +293,7 @@ def power_iterate(N, M, x, p, dangling_weights, is_dangling, alpha, max_iter=500
     return x
 
 
-def item_ppr(sim_mat, alpha, beta):
+def item_ppr(G, dataset, sim_mat, alpha, beta):
     
     # personal_vecを作る(eneity_size * user_size)
     user_idx = [dataset.entity_list.index(u) for u in dataset.user_list]
@@ -319,16 +309,16 @@ def item_ppr(sim_mat, alpha, beta):
     
     item_idx = [dataset.entity_list.index(i) for i in dataset.item_list]
     pred = ppr[:, item_idx]
-    print(pred.shape)
+    #print(pred.shape)
     return pred
 
 
 
-def get_ranking_mat(model, gamma, alpha=0.85, beta=0.01):
+def get_ranking_mat(G, dataset, model, gamma, alpha=0.85, beta=0.01):
     ranking_mat = []
     #sim_mat = reconstruct_kg(model)
-    sim_mat = mk_sparse_sim_mat(model, gamma)
-    pred = item_ppr(sim_mat, alpha, beta)
+    sim_mat = mk_sparse_sim_mat(model, dataset, gamma)
+    pred = item_ppr(G, dataset, sim_mat, alpha, beta)
     #print(pred.shape)
     for i in range(len(dataset.user_list)):
         sorted_idx = np.argsort(np.array(pred[i]))[::-1]
@@ -337,12 +327,10 @@ def get_ranking_mat(model, gamma, alpha=0.85, beta=0.01):
     return ranking_mat
 
 
-user_idx = [dataset.entity_list.index(u) for u in dataset.user_list]
-
-
 def topn_precision(ranking_mat, user_items_dict, n=10):
     not_count = 0
     precision_sum = 0
+    user_idx = [dataset.entity_list.index(u) for u in dataset.user_list]
         
     for i in range(len(ranking_mat)):
         if len(user_items_dict[user_idx[i]]) == 0:
@@ -351,7 +339,8 @@ def topn_precision(ranking_mat, user_items_dict, n=10):
         sorted_idx = ranking_mat[i]
         topn_idx = sorted_idx[:n]  
         hit = len(set(topn_idx) & set(user_items_dict[user_idx[i]]))
-        precision = hit / len(user_items_dict[user_idx[i]])
+        #precision = hit / len(user_items_dict[user_idx[i]])
+        precision = hit / n
         precision_sum += precision
         
     return precision_sum / (len(user_idx) - not_count)
@@ -365,10 +354,10 @@ def time_since(runtime):
 
 def objective(trial):
     start = time.time()
+    # hyper parameter
     #gamma = trial.suggest_loguniform('gamma', 1e-6, 1e-3)
     #lin_model = trial.suggest_categorical('lin_model', ['lasso', 'elastic'])
     #slim = train_SLIM(lin_model, gamma)
-
     alpha = trial.suggest_uniform('alpha', 0, 0.5)
     beta = trial.suggest_uniform('beta', 0, 0.5)
     gamma1 = trial.suggest_uniform('gamma1', 0, 1)
@@ -376,27 +365,51 @@ def objective(trial):
     gamma3 = trial.suggest_uniform('gamma3', 0, 1)
     gamma = [gamma1, gamma2, gamma3]
     
-    ranking_mat = get_ranking_mat(model, gamma, alpha, beta)
-    score = topn_precision(ranking_mat, user_items_test_dict)
+    data_dir = ['../data_luxury_5core/valid1', '../data_luxury_5core/valid2']
+    score_sum = 0
+    for i in range(len(data_dir)):
+        # dataload
+        dataset = AmazonDataset(data_dir[i], model_name='TransE')
+        edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+        # user-itemとitem-userどちらの辺も追加
+        for r in dataset.triplet_df.values:
+            if r[2] == 0:
+                edges.append([r[1], r[0]])
+        #user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
+
+        # load network
+        G = nx.DiGraph()
+        G.add_nodes_from([i for i in range(len(dataset.entity_list))])
+        G.add_edges_from(edges)
+
+
+        ranking_mat = get_ranking_mat(G, dataset, model[i], gamma, alpha, beta)
+        #score = topn_precision(ranking_mat, user_items_test_dict)
+        evaluater = Evaluater(data_dir[i])
+        score = evaluater.topn_map(ranking_mat)
+        score_sum += score
+
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
-    print(score)
     
-    return -1 * score
+    return -1 * score_sum / 2
 
 
 if __name__ == '__main__':
-    # ハイパラ
-    kgembed_param = pickle.load(open('./best_param_SparseTransE_no_item-item_relation.pickle', 'rb'))
-    print(kgembed_param)
-
-    model = train_embed(kgembed_param, 'SparseTransE')
+    # kg_embedハイパラ
+    kgembed_param = pickle.load(open('./best_param_TransE.pickle', 'rb'))
+    start = time.time()
+    model1 = train_embed('../data_luxury_5core/valid1', kgembed_param, 'TransE')
+    model2 = train_embed('../data_luxury_5core/valid2', kgembed_param, 'TransE')
+    model = [model1, model2]
+    mi, sec = time_since(time.time() - start)
+    print(mi, sec)
 
     #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result/hyparams_result_gamma_SparseTransE_no_item-item_relation.csv')
-    with open('./result/best_param_gamma_SparseTransE_no_item-item_relation.pickle', 'wb') as f:
+    df.to_csv('./result_luxury_2cross/hyparams_result_gamma_TransE.csv')
+    with open('./result_luxury_2cross/best_param_gamma_TransE.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)

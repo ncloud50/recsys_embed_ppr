@@ -16,7 +16,7 @@ class AmazonDataset:
         self.model_name = model_name
         self.load_triplet()
         self.load_user_items_dict()
-        self.load_ppr()
+        #self.load_ppr()
 
         # TransEの時だけ使う辞書
         if model_name == 'TransE' or model_name == 'SparseTransE':
