@@ -128,16 +128,16 @@ class TrainIterater():
         return (mi, sec)
 
 
-    def iterate_epoch(self, model, lr, epoch, weight_decay=0,
+    def iterate_epoch(self, model, lr, epoch, weight_decay=0, lambda_=0.5,
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5, early_stop=False):
-        eval_model = Evaluater(self.data_dir, model_name=self.model_name)
+        #eval_model = Evaluater(self.data_dir, model_name=self.model_name)
         es = EarlyStop(self.data_dir, self.model_name, patience=3)
         plot_loss_list = []
         plot_score_list = []
 
         for i in range(epoch):
             plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay,
-                                                       print_every=10000))
+                                                     lambda_=lambda_,  print_every=1))
 
             # early stop
             if early_stop:

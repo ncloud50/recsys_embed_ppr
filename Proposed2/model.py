@@ -1,19 +1,22 @@
 import numpy as np
 import scipy
+import networkx as nx
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dataloader import AmazonDataset
 
-device='cpu'
+from kg_model import TransE, SparseTransE, Complex
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class PPR_Embed(nn.Module):
+class PPR_TransE(TransE):
 
-    def __init__(self, embedding_dim, relation_size, entity_size, kg_model_name, 
-                    data_dir, kappa, gamma=1, alpha=1e-4):
-        super(PPR_Embed, self).__init__()
+    def __init__(self, embedding_dim, relation_size, entity_size,
+                    data_dir, alpha, mu, kappa, gamma=1):
+        super(PPR_TransE, self).__init__(embedding_dim, relation_size, entity_size, gamma)
 
         # dataloader
         self.dataset = AmazonDataset(data_dir)
@@ -26,164 +29,88 @@ class PPR_Embed(nn.Module):
         self.brand_idx = torch.tensor([self.dataset.entity_list.index(b) for b in self.dataset.brand_list], 
                             dtype=torch.long, device=device)
 
-        
-        
-        self.embedding_dim = embedding_dim
-        self.entity_embed = nn.Embedding(entity_size, embedding_dim)
-        self.relation_embed = nn.Embedding(relation_size, embedding_dim)
-        # model para init(normalize)
+        # load network
+        edges = [[r[0], r[1]] for r in self.dataset.triplet_df.values]
+        # user-itemとitem-userどちらの辺も追加
+        for r in self.dataset.triplet_df.values:
+            if r[2] == 0:
+                edges.append([r[1], r[0]])
 
-        # margin para
-        self.gamma = gamma
-        
-        # 正則化パラメータ
-        self.alpha = alpha
-
-        # kgmodel
-        self.kg_model_name = kg_model_name
-        self.kg_model = self.{'TransE': self.TransE, 
-                            'SparseTransE': self.SparseTransE}
+        self.G = nx.DiGraph()
+        self.G.add_nodes_from([i for i in range(len(self.dataset.entity_list))])
+        self.G.add_edges_from(edges)
+        self.H = nx.to_scipy_sparse_matrix(self.G)
+        #self.H = scipy.sparse.coo_matrix(H)
+        #coo = torch.tensor([H.row, H.col], dtype=torch.long)
+        #v = torch.tensor(H.data, dtype=torch.float)
+        #self.H = torch.sparse.FloatTensor(coo, v, torch.Size(H.shape), device=device)
 
         # mk_sim_matの係数
         self.kappa = kappa
 
-        
-    def forward(self, head, tail, relation, n_head, n_tail, n_relation, 
-                reg_user=None, reg_item=None, reg_brand=None):
+        # 埋め込み誤差とページランク誤差のバランス
+        # self.lambda_ = lambda_
 
-        score = self.kg_model[self.kg_model_name](head, tail, relation, n_head, n_tail, n_relation, 
-                                                    reg_user, reg_item, reg_brand):
-        M = self.mk_sparse_sim_mat(self.kappa)
+        # 隣接行列と類似度行列のバランス
+        self.alpha = alpha
+        
+        # PPRでのバイアスの強さ
+        self.mu = mu
+        
+
+    def predict(self, head, tail, relation, n_head, n_tail, n_relation, 
+                ppr_vec, ppr_user_idx):
+
+        ppr_tensor = torch.tensor(ppr_vec, dtype=torch.float, device=device) 
+        score = self.forward(head, tail, relation, n_head, n_tail, n_relation)
 
         # ここでpagerankに相当する計算
-
-        #return score
+        M = self.mk_sparse_sim_mat()
+        vec = torch.tensor([[] for i in range(ppr_tensor.shape[0])])
+        pre_size = 0
+        for k, mat in zip(self.kappa, M):
+            size = mat.shape[0]
+            tmp = (1 - self.alpha) * k * torch.mm(ppr_tensor[:, pre_size:size+pre_size], mat)
+            vec = torch.cat([vec, tmp], dim=1)
+            pre_size = size
+            
+        bias = []
+        for i in ppr_user_idx:
+            tmp = np.array([0 for j in range(len(self.dataset.entity_list))])
+            tmp[i] = 1
+            bias.append(tmp[np.newaxis])
+        bias = np.concatenate(bias)
+        
+        # scipy.sparse matrixを使った計算
+        vec_sparse = self.mu * self.alpha * ppr_vec * self.H + (1 - self.mu) * bias
+        vec = torch.tensor(vec_sparse, device=device) + vec
+        return score, vec
 
         
-    def mk_sparse_sim_mat(self, kappa):
+    def mk_sparse_sim_mat(self):
 
         # ここもっと上手く書きたい
         item_embed = self.entity_embed(self.item_idx)
-        item_sim_mat = torch.mm(item_embed, torch.t(item_embed))
-        item_sim_mat = kappa[0] * scipy.sparse.csr_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
+        item_sim_mat = F.relu(torch.mm(item_embed, torch.t(item_embed)))
+        #item_sim_mat = self.kappa[0] * scipy.sparse.coo_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
 
         user_embed = self.entity_embed(self.user_idx)
-        user_sim_mat = torch.mm(user_embed, torch.t(user_embed))
-        user_sim_mat = kappa[1] * scipy.sparse.csr_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
+        user_sim_mat = F.relu(torch.mm(user_embed, torch.t(user_embed)))
+        #user_sim_mat = self.kappa[1] * scipy.sparse.coo_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
 
         brand_embed = self.entity_embed(self.brand_idx)
-        brand_sim_mat = torch.mm(brand_embed, torch.t(brand_embed))
-        brand_sim_mat = kappa[2] * scipy.sparse.csr_matrix(brand_sim_mat.to('cpu').detach().numpy().copy())
+        brand_sim_mat = F.relu(torch.mm(brand_embed, torch.t(brand_embed)))
+        #brand_sim_mat = self.kappa[2] * scipy.sparse.coo_matrix(brand_sim_mat.to('cpu').detach().numpy().copy())
 
-        M = scipy.sparse.block_diag((item_sim_mat, user_sim_mat, brand_sim_mat))
-        M_ = np.array(1 - M.sum(axis=1) / np.max(M.sum(axis=1)))
-                                        
-        M = M / np.max(M.sum(axis=1)) + scipy.sparse.diags(M_.transpose()[0])
-        return M
+        def normalize(M):
+            M_ = 1 - torch.sum(M, dim=1) / torch.max(torch.sum(M, dim=1))
+            print(M_.shape)
+            print(M.shape)
+            M = M / torch.max(torch.sum(M, dim=1)) + torch.diag(M_.T)
+            return M
 
+        item_sim_mat = normalize(item_sim_mat)
+        user_sim_mat = normalize(user_sim_mat)
+        brand_sim_mat = normalize(brand_sim_mat)
 
-    def TransE(self, head, tail, relation, n_head, n_tail, n_relation):
-                reg_user=None, reg_item=None, reg_brand=None):
-
-        h = self.entity_embed(head)
-        t = self.entity_embed(tail)
-        r = self.relation_embed(relation)
-        n_h = self.entity_embed(n_head)
-        n_t = self.entity_embed(n_tail)
-        n_r = self.relation_embed(n_relation)
-
-        batch_size = h.shape[0]
-        # normalize
-        h = h / torch.norm(h, dim=1).view(batch_size, -1)
-        t = t / torch.norm(t, dim=1).view(batch_size, -1)
-        r = r / torch.norm(r, dim=1).view(batch_size, -1)
-        n_h = n_h / torch.norm(n_h, dim=1).view(batch_size, -1)
-        n_t = n_t / torch.norm(n_t, dim=1).view(batch_size, -1)
-        n_r = n_r / torch.norm(n_r, dim=1).view(batch_size, -1)
-
-        score = self.gamma + torch.norm((h + r - t), dim=1) - torch.norm((n_h + n_r - n_t), dim=1)
-        
-        return score
-
-    
-    def predict_TransE(self, head, tail, relation):
-        h = self.entity_embed(head)
-        t = self.entity_embed(tail)
-        r = self.relation_embed(relation)
-
-        #print(h)
-        batch_size = h.shape[0]
-        # normalize
-        h /= torch.norm(h, dim=1).view(batch_size, -1)
-        t /= torch.norm(t, dim=1).view(batch_size, -1)
-        r /= torch.norm(r, dim=1).view(batch_size, -1)
-
-        pred =  -1 * torch.norm((h + r - t), dim=1)
-
-        return pred
-
-        
-    def SparseTransE(self, head, tail, relation, n_head, n_tail, n_relation, 
-                reg_user=None, reg_item=None, reg_brand=None):
-        
-        h = self.entity_embed(head)
-        t = self.entity_embed(tail)
-        r = self.relation_embed(relation)
-        n_h = self.entity_embed(n_head)
-        n_t = self.entity_embed(n_tail)
-        n_r = self.relation_embed(n_relation)
-
-        batch_size = h.shape[0]
-        # normalize
-        h = h / torch.norm(h, dim=1).view(batch_size, -1)
-        t = t / torch.norm(t, dim=1).view(batch_size, -1)
-        r = r / torch.norm(r, dim=1).view(batch_size, -1)
-        n_h = n_h / torch.norm(n_h, dim=1).view(batch_size, -1)
-        n_t = n_t / torch.norm(n_t, dim=1).view(batch_size, -1)
-        n_r = n_r / torch.norm(n_r, dim=1).view(batch_size, -1)
-
-        score = self.gamma + torch.norm((h + r - t), dim=1) - torch.norm((n_h + n_r - n_t), dim=1)
-        
-        # 正則化
-        if len(reg_user) == 0:
-            reg_u = torch.zeros(2, 2)
-        else:
-            reg_u = self.entity_embed(reg_user)
-
-        if len(reg_item) == 0:
-            reg_i = torch.zeros(2, 2)
-        else:
-            reg_i = self.entity_embed(reg_item)
-
-        if len(reg_brand) == 0:
-            reg_b = torch.zeros(2, 2)
-        else:
-            reg_b = self.entity_embed(reg_brand)
-
-        reg_u = reg_u / torch.norm(reg_u, dim=1).view(reg_u.shape[0], -1)
-        reg_i = reg_i / torch.norm(reg_i, dim=1).view(reg_i.shape[0], -1)
-        reg_b = reg_b / torch.norm(reg_b, dim=1).view(reg_b.shape[0], -1)
-        
-        reg = torch.norm(torch.mm(reg_u, reg_u.T)) + torch.norm(torch.mm(reg_i, reg_i.T)) \
-            + torch.norm(torch.mm(reg_b, reg_b.T))
-
-        score = score + self.alpha * reg
-        
-        return score
-    
-    def predict_SparseTransE(self, head, tail, relation):
-
-        h = self.entity_embed(head)
-        t = self.entity_embed(tail)
-        r = self.relation_embed(relation)
-
-        batch_size = h.shape[0]
-        # normalize
-        h /= torch.norm(h, dim=1).view(batch_size, -1)
-        t /= torch.norm(t, dim=1).view(batch_size, -1)
-        r /= torch.norm(r, dim=1).view(batch_size, -1)
-
-        pred =  -1 * torch.norm((h + r - t), dim=1)
-
-        return pred
-    
+        return item_sim_mat, user_sim_mat, brand_sim_mat
