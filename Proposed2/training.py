@@ -49,7 +49,7 @@ class TrainIterater():
             n_r = torch.tensor(nega_batch[:, 2], dtype=torch.long, device=device)
 
             score, vec = model.predict(h, t, r, n_h, n_t, n_r, ppr_vec, ppr_idx)
-            loss = lambda_ * torch.sum(pred)
+            loss = lambda_ * torch.sum(score)
             loss += (1 - lambda_) * torch.norm(ppr_vec - vec)
 
         elif self.model_name == 'SparseTransE':
