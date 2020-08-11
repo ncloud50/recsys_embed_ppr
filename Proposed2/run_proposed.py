@@ -63,7 +63,8 @@ def objective(trial):
         relation_size = len(set(list(dataset.triplet_df['relation'].values)))
         entity_size = len(dataset.entity_list)
 
-        ppr_transe = PPR_TransE(embedding_dim, relation_size, entity_size, data_dir[i], alpha, mu, kappa)
+        ppr_transe = PPR_TransE(embedding_dim, relation_size, entity_size,
+                                data_dir[i], alpha, mu, kappa).to(device)
 
         iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir[i], model_name=model_name)
 

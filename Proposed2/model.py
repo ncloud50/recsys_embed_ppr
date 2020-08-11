@@ -66,7 +66,7 @@ class PPR_TransE(TransE):
 
         # ここでpagerankに相当する計算
         M = self.mk_sparse_sim_mat()
-        vec = torch.tensor([[] for i in range(ppr_tensor.shape[0])])
+        vec = torch.tensor([[] for i in range(ppr_tensor.shape[0])], device=device)
         pre_size = 0
         for k, mat in zip(self.kappa, M):
             size = mat.shape[0]

@@ -12,6 +12,7 @@ import torch.optim as optim
 from dataloader import AmazonDataset
 from evaluate import Evaluater
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print('device: {}'.format(device))
 
 class TrainIterater():
 
@@ -50,7 +51,7 @@ class TrainIterater():
 
             score, vec = model.predict(h, t, r, n_h, n_t, n_r, ppr_vec, ppr_idx)
             loss = lambda_ * torch.sum(score)
-            loss += (1 - lambda_) * torch.norm(torch.tensor(ppr_vec) - vec)
+            loss += (1 - lambda_) * torch.norm(torch.tensor(ppr_vec, device=device) - vec)
 
         elif self.model_name == 'SparseTransE':
             posi_batch, nega_batch, batch_user, batch_item, batch_brand = batch
