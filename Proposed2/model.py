@@ -104,8 +104,6 @@ class PPR_TransE(TransE):
 
         def normalize(M):
             M_ = 1 - torch.sum(M, dim=1) / torch.max(torch.sum(M, dim=1))
-            print(M_.shape)
-            print(M.shape)
             M = M / torch.max(torch.sum(M, dim=1)) + torch.diag(M_.T)
             return M
 
