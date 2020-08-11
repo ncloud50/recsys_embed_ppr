@@ -14,7 +14,7 @@ from dataloader import AmazonDataset
 from kg_model import DistMulti, TransE, SparseTransE
 from model import PPR_TransE
 from training import TrainIterater
-from evaluate import Evaluater
+from inference import Inference
 
 import optuna
 import time 
@@ -46,7 +46,7 @@ def objective(trial):
 
     # training para
     lambda_ = trial.suggest_uniform('lambada_', 0, 1)
-    batch_size = trial.suggest_int('batch_size', 128, 512, 128)
+    batch_size = trial.suggest_int('batch_size', 256, 512, 128)
     lr= trial.suggest_loguniform('lr', 1e-4, 1e-2)
     weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2)
     warmup = trial.suggest_int('warmup', 10, 100)
@@ -75,6 +75,11 @@ def objective(trial):
 
 
         # inference
+        inf = Inference(data_dir[i])
+        score = inf.get_score(ppr_transe, kappa, mu, alpha)
+        score_sum += score
+
+
 
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
@@ -86,6 +91,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    #df.to_csv('./result_luxury_2cross/hyparams_result_gamma_TransE.csv')
-    #with open('./result_luxury_2cross/best_param_gamma_TransE.pickle', 'wb') as f:
-    #    pickle.dump(study.best_params, f)
+    df.to_csv('./hyparams_result_TransE.csv')
+    with open('./best_param_TransE.pickle', 'wb') as f:
+        pickle.dump(study.best_params, f)

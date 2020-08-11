@@ -10,7 +10,7 @@ import optuna
 
 
 # データ読み込み
-data_dir = '../data_luxury_5core/valid1/'
+data_dir = '../data_luxury_5core/valid2/'
 triplet_df = pd.read_csv(data_dir + 'triplet.csv')
 edges = [[r[0], r[1]] for r in triplet_df.values]
 
@@ -56,4 +56,4 @@ if __name__ == '__main__':
         ppr_mat.append(pred)
 
     ppr_mat = np.array(ppr_mat)
-    np.savetxt('ppr_mat.txt', ppr_mat)
+    np.savetxt('ppr_mat_2.txt', ppr_mat)

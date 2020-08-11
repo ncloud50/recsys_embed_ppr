@@ -60,8 +60,8 @@ class AmazonDataset:
 
     
     def load_ppr(self):
-        #self.ppr_mat = np.loadtxt(self.data_dir + 'ppr_mat.txt')
-        self.ppr_mat = np.loadtxt('ppr_mat.txt')
+        self.ppr_mat = np.loadtxt(self.data_dir + 'ppr/ppr_mat.txt')
+        #self.ppr_mat = np.loadtxt('ppr_mat.txt')
 
        
     # relation -> [h, e, r]_1, [h, e, r]_2, [h, e, r]_3, ...
