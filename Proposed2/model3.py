@@ -9,13 +9,13 @@ from dataloader import AmazonDataset
 
 from kg_model import TransE, SparseTransE, Complex
 
-device='cpu'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class PPR_TransE(TransE):
 
     def __init__(self, embedding_dim, relation_size, entity_size,
-                    data_dir, kappa, gamma=1):
+                    data_dir, alpha, mu, kappa, gamma=1):
         super(PPR_TransE, self).__init__(embedding_dim, relation_size, entity_size, gamma)
 
         # dataloader
@@ -39,22 +39,51 @@ class PPR_TransE(TransE):
         self.G = nx.DiGraph()
         self.G.add_nodes_from([i for i in range(len(self.dataset.entity_list))])
         self.G.add_edges_from(edges)
-
+        self.H = nx.to_scipy_sparse_matrix(self.G)
+        #self.H = scipy.sparse.coo_matrix(H)
+        #coo = torch.tensor([H.row, H.col], dtype=torch.long)
+        #v = torch.tensor(H.data, dtype=torch.float)
+        #self.H = torch.sparse.FloatTensor(coo, v, torch.Size(H.shape), device=device)
 
         # mk_sim_matの係数
         self.kappa = kappa
 
-        
-    def predict(self, head, tail, relation, n_head, n_tail, n_relation, 
-                reg_user=None, reg_item=None, reg_brand=None):
+        # 埋め込み誤差とページランク誤差のバランス
+        # self.lambda_ = lambda_
 
-        score = self.forward(head, tail, relation, n_head, n_tail, n_relation, 
-                             reg_user, reg_item, reg_brand)
-        M = self.mk_sparse_sim_mat()
+        # 隣接行列と類似度行列のバランス
+        self.alpha = alpha
+        
+        # PPRでのバイアスの強さ
+        self.mu = mu
+        
+
+    def predict(self, head, tail, relation, n_head, n_tail, n_relation, 
+                ppr_vec, ppr_user_idx):
+
+        ppr_tensor = torch.tensor(ppr_vec, dtype=torch.float, device=device) 
+        score = self.forward(head, tail, relation, n_head, n_tail, n_relation)
 
         # ここでpagerankに相当する計算
-
-        #return score
+        M = self.mk_sparse_sim_mat()
+        vec = torch.tensor([[] for i in range(ppr_tensor.shape[0])])
+        pre_size = 0
+        for mat in M:
+            size = mat.shape[0]
+            tmp = torch.mm(ppr_tensor[:, pre_size:size+pre_size], mat)
+            vec = torch.cat([vec, tmp], dim=1)
+            pre_size = size
+            
+        bias = []
+        for i in ppr_user_idx:
+            tmp = np.array([0 for j in range(len(self.dataset.entity_list))])
+            tmp[i] = 1
+            bias.append(tmp[np.newaxis])
+        bias = np.concatenate(bias)
+        
+        vec_sparse = self.mu * self.alpha * ppr_vec * self.H + (1 - self.mu) * bias
+        vec = torch.tensor(vec_sparse, device=device) + vec
+        return score, vec
 
         
     def mk_sparse_sim_mat(self):

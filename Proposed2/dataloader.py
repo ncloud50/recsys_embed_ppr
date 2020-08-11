@@ -16,7 +16,7 @@ class AmazonDataset:
         self.model_name = model_name
         self.load_triplet()
         self.load_user_items_dict()
-        #self.load_ppr()
+        self.load_ppr()
 
         # TransEの時だけ使う辞書
         if model_name == 'TransE' or model_name == 'SparseTransE':
@@ -60,7 +60,8 @@ class AmazonDataset:
 
     
     def load_ppr(self):
-        self.ppr_mat = np.loadtxt(self.data_dir + 'ppr_mat.txt')
+        #self.ppr_mat = np.loadtxt(self.data_dir + 'ppr_mat.txt')
+        self.ppr_mat = np.loadtxt('ppr_mat.txt')
 
        
     # relation -> [h, e, r]_1, [h, e, r]_2, [h, e, r]_3, ...
@@ -79,6 +80,7 @@ class AmazonDataset:
         # ppr_matからuserのppr_vecをいくつか取り出す
         batch_user_size = int(len(self.user_list) / (len(self.triplet_df) / batch_size))
         ppr_batch_idx = np.random.permutation(len(self.user_list))[:batch_user_size]
+        user_batch_idx = np.array(self.user_idx)[ppr_batch_idx]
         ppr_vec_batch = self.ppr_mat[ppr_batch_idx]
 
 
@@ -89,14 +91,14 @@ class AmazonDataset:
             batch = pd.concat([self.triplet_df, self.nega_triplet_df]).values[batch_idx]
             batch_y_train = self.y_train[batch_idx]
         
-            return batch, batch_y_train, ppr_vec_batch
+            return batch, batch_y_train, ppr_vec_batch, user_batch_idx
 
         elif self.model_name == 'TransE':
             batch_idx = np.random.permutation(len(self.triplet_df))[:batch_size]
             posi_batch = self.triplet_df.values[batch_idx]
             nega_batch = self.get_nega_batch(posi_batch[:, 2])
             
-            return posi_batch, nega_batch, ppr_vec_batch
+            return posi_batch, nega_batch, ppr_vec_batch, user_batch_idx
             
         elif self.model_name == 'SparseTransE':
             batch_idx = np.random.permutation(len(self.triplet_df))[:batch_size]
@@ -135,4 +137,4 @@ class AmazonDataset:
             nega_batch.append(nega_tri)
     
         return np.array(nega_batch)
-            
+
