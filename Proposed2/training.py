@@ -99,7 +99,7 @@ class TrainIterater():
         for i in range(int(train_num / self.batch_size) + 1):
 
             batch = self.dataset.get_batch(batch_size=self.batch_size)
-            loss = self.train(batch, loss_func, optimizer, model, labmda_)
+            loss = self.train(batch, loss_func, optimizer, model, lambda_)
             print_loss_total += loss.detach()
             plot_loss_total += loss.detach()
 
