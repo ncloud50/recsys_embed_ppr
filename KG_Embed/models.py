@@ -214,3 +214,78 @@ class Complex(nn.Module):
         score = torch.sigmoid(score)
         
         return score
+
+
+class RegComplex(nn.Module):
+
+    def __init__(self, embedding_dim, relation_size, entity_size, alpha):
+        super(RegComplex, self).__init__()
+        self.embedding_dim = embedding_dim
+        self.entity_re = nn.Embedding(entity_size, embedding_dim)
+        self.relation_re = nn.Embedding(relation_size, embedding_dim)
+        self.entity_im = nn.Embedding(entity_size, embedding_dim)
+        self.relation_im = nn.Embedding(relation_size, embedding_dim)
+
+        self.alpha = alpha
+        
+        
+    def forward(self, head, tail, relation,
+                reg_user, reg_item, reg_brand):
+        head_re = self.entity_re(head)
+        tail_re = self.entity_re(tail)
+        relation_re = self.relation_re(relation)
+        head_im = self.entity_im(head)
+        tail_im = self.entity_im(tail)
+        relation_im = self.relation_im(relation)
+        
+        score = torch.sum(relation_re * head_re * tail_re, axis=1) \
+                + torch.sum(relation_re * head_im * tail_im,  axis=1) \
+                + torch.sum(relation_im * head_re * tail_im,  axis=1) \
+                - torch.sum(relation_im * head_im * tail_re,  axis=1)
+
+        score = torch.sigmoid(score)
+        
+        # 正則化
+        if len(reg_user) == 0:
+            reg_u = torch.zeros(2, 2)
+        else:
+            reg_u = torch.cat([self.entity_re(reg_user) , self.entity_im(reg_user)], dim=0)
+            #reg_u = reg_u / torch.norm(reg_u, dim=1).view(reg_u.shape[0], -1)
+
+        if len(reg_item) == 0:
+            reg_i = torch.zeros(2, 2)
+        else:
+            reg_i = torch.cat([self.entity_re(reg_item), self.entity_im(reg_item)], dim=0)
+            #reg_i = reg_i / torch.norm(reg_i, dim=1).view(reg_i.shape[0], -1)
+
+        if len(reg_brand) == 0:
+            reg_b = torch.zeros(2, 2)
+        else:
+            reg_b = torch.cat([self.entity_re(reg_brand), self.entity_im(reg_brand)], dim=0)
+            #reg_b = reg_b / torch.norm(reg_b, dim=1).view(reg_b.shape[0], -1)
+
+        
+        reg = torch.norm(torch.mm(reg_u, reg_u.T)) + torch.norm(torch.mm(reg_i, reg_i.T)) \
+            + torch.norm(torch.mm(reg_b, reg_b.T))
+
+        #score = score + self.alpha * reg
+        
+        return score, reg
+    
+
+    def predict(self, head, tail, relation):
+        head_re = self.entity_re(head)
+        tail_re = self.entity_re(tail)
+        relation_re = self.relation_re(relation)
+        head_im = self.entity_im(head)
+        tail_im = self.entity_im(tail)
+        relation_im = self.relation_im(relation)
+        
+        score = torch.sum(relation_re * head_re * tail_re, axis=1) \
+                + torch.sum(relation_re * head_im * tail_im,  axis=1) \
+                + torch.sum(relation_im * head_re * tail_im,  axis=1) \
+                - torch.sum(relation_im * head_im * tail_re,  axis=1)
+
+        score = torch.sigmoid(score)
+        
+        return score

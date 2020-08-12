@@ -70,6 +70,23 @@ class TrainIterater():
 
             loss = torch.sum(pred)
 
+        elif self.model_name == 'RegComplex':
+            triplet, y_train, batch_user, batch_item, batch_brand = batch
+            h_entity_tensor = torch.tensor(triplet[:, 0], dtype=torch.long, device=device)
+            t_entity_tensor = torch.tensor(triplet[:, 1], dtype=torch.long, device=device)
+            relation_tensor = torch.tensor(triplet[:, 2], dtype=torch.long, device=device)
+            y_train = torch.tensor(y_train, dtype=torch.float, device=device)
+
+            reg_user = torch.tensor(batch_user, dtype=torch.long, device=device)
+            reg_item = torch.tensor(batch_item, dtype=torch.long, device=device)
+            reg_brand = torch.tensor(batch_brand, dtype=torch.long, device=device)
+
+            pred, reg = model(h_entity_tensor, t_entity_tensor, relation_tensor, 
+                                reg_user, reg_item, reg_brand)
+
+            loss = loss_func(pred, y_train) + reg
+
+
         loss.backward()
         optimizer.step()
 
@@ -87,7 +104,7 @@ class TrainIterater():
         plot_loss_list = []
         plot_loss_total = 0
 
-        if self.model_name == 'DistMulti' or self.model_name == 'Complex':
+        if self.model_name == 'DistMulti' or self.model_name == 'Complex' or self.model_name == 'RegComplex':
             train_num = len(self.dataset.triplet_df) + len(self.dataset.nega_triplet_df)
         elif self.model_name == 'TransE' or self.model_name == 'SparseTransE':
             train_num = len(self.dataset.triplet_df)
@@ -129,7 +146,7 @@ class TrainIterater():
     def iterate_epoch(self, model, lr, epoch, weight_decay=0,
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5, early_stop=False):
         eval_model = Evaluater(self.data_dir, model_name=self.model_name)
-        es = EarlyStop(self.data_dir, self.model_name, patience=3)
+        es = EarlyStop(self.data_dir, self.model_name, patience=6)
         plot_loss_list = []
         plot_score_list = []
 
@@ -339,6 +356,8 @@ class EarlyStop():
                             reg_user, reg_item, reg_brand)
 
                 loss = torch.sum(pred)
+
+            
             
         return loss
 

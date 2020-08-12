@@ -105,6 +105,32 @@ class AmazonDataset:
             batch_brand = batch_brand[batch_brand < len(self.brand_list)]
 
             return posi_batch, nega_batch, batch_user, batch_item, batch_brand
+        
+
+        elif self.model_name == 'RegComplex':
+            train_num = len(self.triplet_df) + len(self.nega_triplet_df)
+            batch_idx = np.random.permutation(train_num)[:batch_size]
+            # posi_tripletとnega_tripletを連結
+            batch = pd.concat([self.triplet_df, self.nega_triplet_df]).values[batch_idx]
+            batch_y_train = self.y_train[batch_idx]
+
+            # reguralizationのためのbatch
+            # entity_typeの数だけ
+            batch_entity_size = int(len(self.entity_list) / (len(self.triplet_df) / batch_size))
+            reg_batch_idx = np.random.permutation(len(self.entity_list))[:batch_entity_size]
+
+            batch_item = reg_batch_idx[reg_batch_idx < len(self.item_list)]
+
+            batch_user = reg_batch_idx[reg_batch_idx >= len(self.item_list)]
+            batch_user = batch_user[batch_user < len(self.user_list)]
+
+            batch_brand = reg_batch_idx[reg_batch_idx >= len(self.user_list)]
+            batch_brand = batch_brand[batch_brand < len(self.brand_list)]
+
+            return batch, batch_y_train, batch_user, batch_item, batch_brand
+
+
+
     
     def get_nega_batch(self, relations):
         nega_batch = []
