@@ -162,8 +162,8 @@ class TrainIterater():
         #self._plot(plot_loss_list)
         #self._plot(plot_score_list)
 
-        #return eval_model.topn_precision(model)
-        return eval_model.topn_map(model)
+        #return eval_model.topn_map(model)
+        return model
 
 
 

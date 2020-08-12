@@ -89,7 +89,7 @@ def objective(trial):
 
 if __name__ == '__main__':
     study = optuna.create_study()
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=50)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./hyparams_result_TransE.csv')
     with open('./best_param_TransE.pickle', 'wb') as f:
