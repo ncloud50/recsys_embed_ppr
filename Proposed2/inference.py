@@ -143,9 +143,9 @@ class Inference():
                 #print(i)
                 return x
         # pagerankの収束ちゃんとやっとく
-        print(x.sum())
-        print(err)
-        print(N * tol)
+        #print(x.sum())
+        #print(err)
+        #print(N * tol)
         #raise NetworkXError('pagerank_scipy: power iteration failed to converge '
                             #'in %d iterations.' % max_iter)
             
