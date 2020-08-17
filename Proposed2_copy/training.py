@@ -139,7 +139,7 @@ class TrainIterater():
 
         for i in range(epoch):
             plot_loss_list.extend(self.iterate_train(model, lr=lr, weight_decay=weight_decay,
-                                                     lambda_=lambda_,  print_every=10000))
+                                                     lambda_=lambda_,  print_every=1e+6))
 
             # early stop
             if early_stop:
