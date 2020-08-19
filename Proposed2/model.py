@@ -70,20 +70,23 @@ class PPR_TransE(TransE):
         pre_size = 0
         for k, mat in zip(self.kappa, M):
             size = mat.shape[0]
-            tmp = (1 - self.alpha) * k * torch.mm(ppr_tensor[:, pre_size:size+pre_size], mat)
+            tmp = self.mu * (1 - self.alpha) * k * torch.mm(ppr_tensor[:, pre_size:size+pre_size], mat)
             vec = torch.cat([vec, tmp], dim=1)
             pre_size = size
             
-        bias = []
-        for i in ppr_user_idx:
-            tmp = np.array([0 for j in range(len(self.dataset.entity_list))])
-            tmp[i] = 1
-            bias.append(tmp[np.newaxis])
-        bias = np.concatenate(bias)
-        
         # scipy.sparse matrixを使った計算
-        vec_sparse = self.mu * self.alpha * ppr_vec * self.H + (1 - self.mu) * bias
-        vec = torch.tensor(vec_sparse, device=device) + vec
+        ## bias vec
+        #bias = []
+        #for i in ppr_user_idx:
+        #    tmp = np.array([0 for j in range(len(self.dataset.entity_list))])
+        #    tmp[i] = 1
+        #    bias.append(tmp[np.newaxis])
+        #bias = np.concatenate(bias)
+        
+        #vec_sparse = self.mu * self.alpha * ppr_vec * self.H + (1 - self.mu) * bias
+
+        #vec = torch.tensor(vec_sparse, device=device) + vec
+
         return score, vec
 
         

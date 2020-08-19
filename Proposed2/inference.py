@@ -79,7 +79,7 @@ class Inference():
 
 
     def pagerank_scipy(self, sim_mat,  personal_vec=None, alpha=0.85, beta=0.01,
-                    max_iter=500, tol=1.0e-6, weight='weight',
+                    max_iter=100, tol=1.0e-6, weight='weight',
                     dangling=None):
         
         N = len(self.G)
