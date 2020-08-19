@@ -9,37 +9,7 @@ import torch
 import optuna
 
 # データ読み込み
-triplet_df = pd.read_csv('./data/triplet.csv')
-edges = [[r[0], r[1]] for r in triplet_df.values]
-
-entity_list = []
-user_list =[]
-item_list = []
-with open('./data/entity_list.txt', 'r') as f:
-    for l in f:
-        entity_list.append(l.replace('\n', ''))
-        
-with open('./data/user_list.txt', 'r') as f:
-    for l in f:
-        user_list.append(l.replace('\n', ''))
-        
-with open('./data/item_list.txt', 'r') as f:
-    for l in f:
-        item_list.append(l.replace('\n', ''))
-        
-user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
-
-user_idx = [entity_list.index(u) for u in user_list]
-
-
-# グラフを作る
-G = nx.DiGraph()
-G.add_nodes_from([i for i in range(len(entity_list))])
-G.add_edges_from(edges)
-
-# tripletに重複が存在する
-print('edges: {}'.format(len(G.edges)))
-print('nodes: {}'.format(len(G.nodes)))
+#data_dir = '../data_luxury_5core'
 
 
 def item_ppr(user, alpha):
@@ -105,9 +75,46 @@ def time_since(runtime):
 
 def objective(trial):
     start = time.time()
-    alpha = trial.suggest_uniform('alpha', 0, 1)
-    ranking_mat = get_ranking_mat(alpha)
-    score = topn_precision(ranking_mat, user_items_test_dict)
+
+    data_dir = ['../data_luxury_5core/valid1/', '../data_luxury_5core/valid2/']
+    score_sum = 0
+
+    # dataload
+    for data_path in data_dir:
+        triplet_df = pd.read_csv(data_path + 'triplet.csv')
+        edges = [[r[0], r[1]] for r in triplet_df.values]
+
+        entity_list = []
+        user_list =[]
+        item_list = []
+        with open(data_path + 'entity_list.txt', 'r') as f:
+            for l in f:
+                entity_list.append(l.replace('\n', ''))
+                
+        with open(data_path + 'user_list.txt', 'r') as f:
+            for l in f:
+                user_list.append(l.replace('\n', ''))
+                
+        with open(data_path + 'item_list.txt', 'r') as f:
+            for l in f:
+                item_list.append(l.replace('\n', ''))
+                
+        user_items_test_dict = pickle.load(open(data_path + 'user_items_test_dict.pickle', 'rb'))
+
+        user_idx = [entity_list.index(u) for u in user_list]
+
+        # グラフを作る
+        G = nx.DiGraph()
+        G.add_nodes_from([i for i in range(len(entity_list))])
+        G.add_edges_from(edges)
+
+        # ハイパラ
+        alpha = trial.suggest_uniform('alpha', 0, 1)
+
+        ranking_mat = get_ranking_mat(alpha)
+        score = topn_precision(ranking_mat, user_items_test_dict)
+
+
     mi, sec = time_since(time.time() - start)
     print('{}m{}s'.format(mi, sec))
     return -1 * score
