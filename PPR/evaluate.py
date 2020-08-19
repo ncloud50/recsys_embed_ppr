@@ -48,7 +48,8 @@ class Evaluater():
         not_count = 0
         map_sum = 0
 
-        for i in range(len(user_idx)):
+        #for i in range(len(user_idx)):
+        for i in range(len(ranking_mat)):
             if len(self.dataset.user_items_test_dict[user_idx[i]]) == 0:
                 not_count += 1
                 continue

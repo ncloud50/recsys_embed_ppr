@@ -8,11 +8,12 @@ import time
 import torch
 import optuna
 
-# データ読み込み
-#data_dir = '../data_luxury_5core'
+import evaluate
+import dataloader
 
 
-def item_ppr(user, alpha):
+
+def item_ppr(G, user, alpha, dataset):
     val = np.zeros(len(G.nodes))
     val[user] = 1
     k = [i for i in range(len(G.nodes))]
@@ -26,24 +27,23 @@ def item_ppr(user, alpha):
     #ppr = dict(zip(k, val))
     
     pred = []
-    item_idx = [entity_list.index(i) for i in item_list]
-    for i in item_idx:
+    for i in dataset.item_idx:
         pred.append(ppr[i])
     
     return pred
 
 
-def get_ranking_mat(alpha=0.85):
+def get_ranking_mat(G, alpha=0.85, dataset=None):
     ranking_mat = []
     count = 0
-    for u in user_idx:
-        pred = item_ppr(u, alpha)
+    for u in dataset.user_idx:
+        pred = item_ppr(G, u, alpha, dataset)
         #print(pred)
         sorted_idx = np.argsort(np.array(pred))[::-1]
         ranking_mat.append(sorted_idx)
         
         #count += 1
-        #if count > 100:
+        #if count > 2:
         #    break
             
     return ranking_mat
@@ -79,48 +79,36 @@ def objective(trial):
     data_dir = ['../data_luxury_5core/valid1/', '../data_luxury_5core/valid2/']
     score_sum = 0
 
-    # dataload
     for data_path in data_dir:
-        triplet_df = pd.read_csv(data_path + 'triplet.csv')
-        edges = [[r[0], r[1]] for r in triplet_df.values]
+        # dataload
+        dataset = dataloader.AmazonDataset(data_path)
+        edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+        for r in dataset.triplet_df.values:
+            if r[2] == 0:
+                edges.append([r[1], r[0]])
 
-        entity_list = []
-        user_list =[]
-        item_list = []
-        with open(data_path + 'entity_list.txt', 'r') as f:
-            for l in f:
-                entity_list.append(l.replace('\n', ''))
-                
-        with open(data_path + 'user_list.txt', 'r') as f:
-            for l in f:
-                user_list.append(l.replace('\n', ''))
-                
-        with open(data_path + 'item_list.txt', 'r') as f:
-            for l in f:
-                item_list.append(l.replace('\n', ''))
-                
-        user_items_test_dict = pickle.load(open(data_path + 'user_items_test_dict.pickle', 'rb'))
-
-        user_idx = [entity_list.index(u) for u in user_list]
+        #user_items_test_dict = pickle.load(open(data_path + 'user_items_test_dict.pickle', 'rb'))
 
         # グラフを作る
         G = nx.DiGraph()
-        G.add_nodes_from([i for i in range(len(entity_list))])
+        G.add_nodes_from([i for i in range(len(dataset.entity_list))])
         G.add_edges_from(edges)
 
         # ハイパラ
         alpha = trial.suggest_uniform('alpha', 0, 1)
 
-        ranking_mat = get_ranking_mat(alpha)
-        score = topn_precision(ranking_mat, user_items_test_dict)
+        ranking_mat = get_ranking_mat(G, alpha, dataset)
+        evaluater = evaluate.Evaluater(data_path)
+        score = evaluater.topn_map(ranking_mat)
+        score_sum += score
 
 
     mi, sec = time_since(time.time() - start)
     print('{}m{}s'.format(mi, sec))
-    return -1 * score
+    return -1 * score_sum / 2
 
 if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=10)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('hyparams_result_all_beauty.csv')
+    df.to_csv('hyparams_result_luxury.csv')
