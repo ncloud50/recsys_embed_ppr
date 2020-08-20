@@ -46,31 +46,6 @@ class SLIM():
         self.sim_mat = np.concatenate(sim_mat, axis=1)
 
 
-    def fit_glm(self, user_item_train_df):
-        # rating_mat
-        self.row = np.array([r[0] for r in user_item_train_df.values], dtype=int)
-        self.col = np.array([r[1] for r in user_item_train_df.values], dtype=int)
-        self.data = np.ones(len(user_item_train_df), dtype=int)
-        self.rating_mat = csr_matrix((self.data, (self.row, self.col)), shape = (self.user_num, self.item_num))
-        
-        # linear modelを解く
-        sim_mat = []
-        for i in range(self.item_num):
-            X = self.del_col(i)
-            y = self.rating_mat[:, i]
-    
-            self.reg.fit(X, y)
-            print(self.reg.beta_)
-            print(self.reg.beta_.shape)
-            #w = np.insert(self.reg.coef_, i, 0)[:,  np.newaxis]
-            #sim_mat.append(w)
-    
-            if i > 1:
-                break
-
-        self.sim_mat = np.concatenate(sim_mat, axis=1)
-
-
     def fit_multi(self, user_item_train_df):
         # rating_mat
         self.row = np.array([r[0] for r in user_item_train_df.values], dtype=int)
@@ -114,12 +89,14 @@ class SLIM():
         np.savetxt(path, self.sim_mat)
 
         
-    def pred_ranking(self, user_id):
+    def predict(self):
         pred_mat = np.dot(self.rating_mat.toarray(), self.sim_mat)
+        self.rec_mat = pred_mat - self.rating_mat
 
+    def pred_ranking(self, user_id):
         # あるユーザの予測ランキングを返す
-        rec_mat = pred_mat - self.rating_mat
-        row_user = rec_mat[user_id, :]
+        #rec_mat = self.pred_mat - self.rating_mat
+        row_user = self.rec_mat[user_id, :]
         #print(row_user)
         rec_item_idx = np.argsort(row_user)[::-1]
 

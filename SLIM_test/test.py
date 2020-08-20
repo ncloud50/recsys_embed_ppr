@@ -80,6 +80,7 @@ if __name__ == '__main__':
     model.fit_multi(user_item_train_df)
     #model.load_sim_mat('./sim_mat.txt', user_item_train_df)
     eval_model = evaluate.Evaluater(user_item_test_df, len(user_list))
+    model.predict()
     score_sum = 0
     not_count = 0
     for i in range(len(user_list)):
