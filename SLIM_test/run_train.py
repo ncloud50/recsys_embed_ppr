@@ -18,7 +18,7 @@ lin_model = 'elastic'
 def objective(trial):
     start = time.time()
 
-    data_dirs = ['../data_luxury_5core/valid1', '../data_luxury_5core/valid2']
+    data_dirs = ['../data_luxury_5core/valid1/bpr/', '../data_luxury_5core/valid2/bpr/']
     score_sum = 0
 
     # ハイパラ
