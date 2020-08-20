@@ -8,13 +8,18 @@ import numpy as np
 class AmazonDataset:
 
 
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, model_name='DistMulti'):
         self.data_dir = data_dir
         if not self.data_dir.endswith('/'):
             self.data_dir += '/'
 
+        self.model_name = model_name
         self.load_triplet()
         self.load_user_items_dict()
+
+        # TransEの時だけ使う辞書
+        if model_name == 'TransE' or model_name == 'SparseTransE':
+            self.relation_aggregate(self.nega_triplet_df)
 
 
     def load_triplet(self):
@@ -63,7 +68,6 @@ class AmazonDataset:
 
         self.relation_entity_dict = relation_entity_dict
 
-'''
     def get_batch(self, batch_size=2):
 
         if self.model_name == 'DistMulti':
@@ -124,4 +128,4 @@ class AmazonDataset:
             nega_batch.append(nega_tri)
     
         return np.array(nega_batch)
-'''
+            

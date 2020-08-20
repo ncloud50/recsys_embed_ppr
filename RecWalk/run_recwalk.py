@@ -8,6 +8,7 @@ import scipy.sparse
 import pickle
 
 from SLIM_model import SLIM
+from dataloader import AmazonDataset
 import optuna
 import time
 
@@ -17,38 +18,22 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-# dataload
-slim_train = pd.read_csv('./data2/user_item_train_slim.csv')
-triplet_df = pd.read_csv('./data2/triplet.csv')
-edges = [[r[0], r[1]] for r in triplet_df.values]
-# user-itemとitem-userどちらの辺も追加
-for r in triplet_df.values:
-    if r[2] == 0:
-        edges.append([r[1], r[0]])
 
-user_list = []
-item_list = []
-entity_list = []
-with open('./data2/user_list.txt', 'r') as f:
-    for l in f:
-        user_list.append(l.replace('\n', ''))
-with open('./data2/item_list.txt', 'r') as f:
-    for l in f:
-        item_list.append(l.replace('\n', ''))
-with open('./data2/entity_list.txt', 'r') as f:
-    for l in f:
-        entity_list.append(l.replace('\n', ''))
-
-
-user_items_test_dict = pickle.load(open('./data2/user_items_test_dict.pickle', 'rb'))
-
-# SLIMのハイパラをロードする
-slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
 
 
 # ハイパラ
 # gamma
 def train_SLIM(hyparam):
+    slim_train = pd.read_csv('../data_luxury_5core/valid1/bpr/user_item_train.csv')
+    user_list = []
+    item_list = []
+    with open('./data2/user_list.txt', 'r') as f:
+        for l in f:
+            user_list.append(l.replace('\n', ''))
+    with open('./data2/item_list.txt', 'r') as f:
+        for l in f:
+            item_list.append(l.replace('\n', ''))
+
     # ハイパラロードもっと上手く書く
     alpha = hyparam['alpha']
     l1_ratio = hyparam['l1_ratio']
@@ -59,10 +44,6 @@ def train_SLIM(hyparam):
     #slim.save_sim_mat('./sim_mat.txt')
     return slim
 
-# load network
-G = nx.DiGraph()
-G.add_nodes_from([i for i in range(len(entity_list))])
-G.add_edges_from(edges)
 
 
 def mk_sparse_sim_mat(G, item_mat):
@@ -164,13 +145,12 @@ def pagerank_scipy(G, sim_mat, alpha, beta, personalization=None,
 
 
 
-def item_ppr(sim_mat, user, alpha, beta):
+def item_ppr(G, sim_mat, user, alpha, beta, dataset):
     val = np.zeros(len(G.nodes()))
     val[user] = 1
     k = [i for i in range(len(G.nodes()))]
     personal_vec = dict(zip(k, val))
     #print(personal_vec)
-    #ppr = pagerank_numpy(G, slim.sim_mat, alpha, beta, personalization=personal_vec)
     #ppr = pagerank_scipy(G, sim_mat, alpha, beta, personalization=personal_vec)
     #return pr
     
@@ -182,51 +162,31 @@ def item_ppr(sim_mat, user, alpha, beta):
     ppr = dict(zip(k, val))
     
     pred = []
-    item_idx = [entity_list.index(i) for i in item_list]
-    for i in item_idx:
+    for i in dataset.item_idx:
         pred.append(ppr[i])
     
     return pred
 
 
-def get_ranking_mat(slim, alpha, beta):
-    user_idx = [entity_list.index(u) for u in user_list]
+def get_ranking_mat(G, slim, alpha, beta, dataset):
+    #user_idx = [entity_list.index(u) for u in user_list]
     ranking_mat = []
     count = 0
     sim_mat = mk_sparse_sim_mat(G, slim.sim_mat)
     count = 0
-    for u in user_idx:
-        pred = item_ppr(sim_mat, u, alpha, beta)
+    for u in dataset.user_idx:
+        pred = item_ppr(G, sim_mat, u, alpha, beta, dataset)
         #print(pred[0:5])
         sorted_idx = np.argsort(np.array(pred))[::-1]
         #print(sorted_idx[:10])
         ranking_mat.append(sorted_idx)
 
-        #count += 1
-        #if count > 2:
-        #   break
-            
     return ranking_mat
 
 
-def topn_precision(ranking_mat, user_items_dict, n=10):
-    user_idx = [entity_list.index(u) for u in user_list]
-    not_count = 0
-    precision_sum = 0
-        
-    for i in range(len(ranking_mat)):
-        if len(user_items_dict[user_idx[i]]) == 0:
-            not_count += 1
-            continue
-        sorted_idx = ranking_mat[i]
-        topn_idx = sorted_idx[:n]  
-        hit = len(set(topn_idx) & set(user_items_dict[user_idx[i]]))
-        #precision = hit / len(user_items_dict[user_idx[i]])
-        precision = hit / n
-        precision_sum += precision
-        
-    return precision_sum / (len(user_idx) - not_count)
 
+# SLIMのハイパラをロードする
+slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
 # laod model
 slim = train_SLIM(slim_param)
 
@@ -238,16 +198,34 @@ def objective(trial):
     alpha = trial.suggest_uniform('alpha', 0, 1)
     beta = trial.suggest_uniform('beta', 0, 0.5)
 
-    evaluater = Evaluater('../data_luxury_5core')
-    ranking_mat = get_ranking_mat(slim, alpha, beta)
-    #score = topn_precision(ranking_mat, user_items_test_dict)
-    #score = evaluater.topn_precision(ranking_mat)
-    score = evaluater.topn_map(ranking_mat)
+    data_dirs = ['../data_luxury_5core/valid1/', '../data_luxury_5core/valid2/']
+    score_sum = 0
+    for data_dir in data_dirs:
+        # dataload
+        dataset = AmazonDataset(data_dir)
+
+        edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+        # user-itemとitem-userどちらの辺も追加
+        for r in dataset.triplet_df.values:
+            if r[2] == 0:
+                edges.append([r[1], r[0]])
+            
+        # load network
+        G = nx.DiGraph()
+        G.add_nodes_from([i for i in range(len(dataset.entity_list))])
+        G.add_edges_from(edges)
+
+        evaluater = Evaluater(data_dir)
+        ranking_mat = get_ranking_mat(G, slim, alpha, beta, dataset)
+        #score = evaluater.topn_precision(ranking_mat)
+        score = evaluater.topn_map(ranking_mat)
+
+        score_sum += score
     
     mi, sec = time_since(time.time() - start)
     print('{}m{}s'.format(mi, sec))
     
-    return -1 * score
+    return -1 * score_sum / 2
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -263,6 +241,3 @@ if __name__ == '__main__':
     # save best params 
     with open('best_param_no_item-item_relation.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
-    
-
-
