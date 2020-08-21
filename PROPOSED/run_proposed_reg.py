@@ -33,9 +33,8 @@ def train_embed(data_dir, params, model_name):
     batch_size = params['batch_size']
     lr = params['lr']
     weight_decay = params['weight_decay']
-    #warmup = params['warmup']
+    warmup = params['warmup']
     #lr_decay_every = params['lr_decay_every']
-    warmup = 350
     lr_decay_every = 2
     lr_decay_rate = params['lr_decay_rate']
     if model_name == 'SparseTransE':
@@ -359,9 +358,6 @@ def time_since(runtime):
 def objective(trial):
     start = time.time()
     # hyper parameter
-    #gamma = trial.suggest_loguniform('gamma', 1e-6, 1e-3)
-    #lin_model = trial.suggest_categorical('lin_model', ['lasso', 'elastic'])
-    #slim = train_SLIM(lin_model, gamma)
     alpha = trial.suggest_uniform('alpha', 0, 0.5)
     beta = trial.suggest_uniform('beta', 0, 0.5)
     gamma1 = trial.suggest_uniform('gamma1', 0, 1)
@@ -373,19 +369,18 @@ def objective(trial):
     score_sum = 0
     for i in range(len(data_dir)):
         # dataload
-        dataset = AmazonDataset(data_dir[i], model_name='TransE')
+        dataset = AmazonDataset(data_dir[i], model_name='SparseTransE')
+
+        # load network
         edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
         # user-itemとitem-userどちらの辺も追加
         for r in dataset.triplet_df.values:
             if r[2] == 0:
                 edges.append([r[1], r[0]])
-        #user_items_test_dict = pickle.load(open('./data/user_items_test_dict.pickle', 'rb'))
 
-        # load network
         G = nx.DiGraph()
         G.add_nodes_from([i for i in range(len(dataset.entity_list))])
         G.add_edges_from(edges)
-
 
         ranking_mat = get_ranking_mat(G, dataset, model[i], gamma, alpha, beta)
         #score = topn_precision(ranking_mat, user_items_test_dict)
@@ -401,10 +396,10 @@ def objective(trial):
 
 if __name__ == '__main__':
     # kg_embedハイパラ
-    kgembed_param = pickle.load(open('./best_param_TransE.pickle', 'rb'))
+    kgembed_param = pickle.load(open('./kgembed_params/best_param_SparseTransE.pickle', 'rb'))
     start = time.time()
-    model1 = train_embed('../data_luxury_5core/valid1', kgembed_param, 'TransE')
-    model2 = train_embed('../data_luxury_5core/valid2', kgembed_param, 'TransE')
+    model1 = train_embed('../data_luxury_5core/valid1', kgembed_param, 'SparseTransE')
+    model2 = train_embed('../data_luxury_5core/valid2', kgembed_param, 'SparseTransE')
     model = [model1, model2]
     mi, sec = time_since(time.time() - start)
     print(mi, sec)
@@ -414,6 +409,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result_luxury_2cross/hyparams_result_gamma_TransE_relu.csv')
-    with open('./result_luxury_2cross/best_param_gamma_TransE_relu.pickle', 'wb') as f:
+    df.to_csv('./result_luxury_2cross/hyparams_result_regTransE_relu.csv')
+    with open('./result_luxury_2cross/best_param_regTransE.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
