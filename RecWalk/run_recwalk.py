@@ -153,15 +153,15 @@ def item_ppr(G, sim_mat, user, alpha, beta, dataset):
     k = [i for i in range(len(G.nodes()))]
     personal_vec = dict(zip(k, val))
     #print(personal_vec)
-    #ppr = pagerank_scipy(G, sim_mat, alpha, beta, personalization=personal_vec)
+    ppr = pagerank_scipy(G, sim_mat, alpha, beta, personalization=personal_vec)
     #return pr
     
     # random 後で消す
     # val = np.random.dirichlet([1 for i in range(len(G.nodes))], 1)[0]
-    val = np.random.rand(len(G.nodes()))
-    val /= val.sum()
-    k = [i for i in range(len(G.nodes))]
-    ppr = dict(zip(k, val))
+    #val = np.random.rand(len(G.nodes()))
+    #val /= val.sum()
+    #k = [i for i in range(len(G.nodes))]
+    #ppr = dict(zip(k, val))
     
     pred = []
     for i in dataset.item_idx:
@@ -204,6 +204,7 @@ def objective(trial):
         dataset = AmazonDataset(data_dir)
 
         # laod model
+        slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
         slim = train_SLIM(slim_param, data_dir, load=True)
 
         edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
