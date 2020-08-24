@@ -407,7 +407,7 @@ if __name__ == '__main__':
     #model = pickle.load(open('model.pickle', 'rb'))
 
     study = optuna.create_study()
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=50)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv('./result_luxury_2cross/hyparams_result_TransE_relu.csv')
     with open('./result_luxury_2cross/best_param_TransE.pickle', 'wb') as f:
