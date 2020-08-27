@@ -31,38 +31,40 @@ def objective(trial):
     import gc
     gc.collect()
     
-    data_dir = '../data/bpr'
+    score_sum = 0
+    data_dirs = ['../data_luxury_5core/valid1/bpr', '../data_luxury_5core/valid2/bpr']
+    for data_dir in data_dirs:
+        dataset = dataloader.AmazonDataset(data_dir)
+        embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
+        user_size = len(dataset.user_list)
+        item_size = len(dataset.item_list)
+        layer_size = trial.suggest_int('layer_size', 1, 3)
+        nfm = model.NFM(int(embedding_dim), user_size, item_size, layer_size).to(device)
 
-    dataset = dataloader.AmazonDataset(data_dir)
-    embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
-    user_size = len(dataset.user_list)
-    item_size = len(dataset.item_list)
-    layer_size = trial.suggest_int('layer_size', 1, 3)
-    nfm = model.NFM(int(embedding_dim), user_size, item_size, layer_size).to(device)
+        batch_size = int(trial.suggest_discrete_uniform('batch_size', 128, 512, 128))
+        lr= trial.suggest_loguniform('lr', 1e-4, 1e-2)
+        weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2)
+        warmup = 350
+        lr_decay_every = 2
+        lr_decay_rate = trial.suggest_uniform('lr_decay_rate', 0.5, 1)
 
-    batch_size = int(trial.suggest_discrete_uniform('batch_size', 128, 512, 128))
-    lr= trial.suggest_loguniform('lr', 1e-4, 1e-2)
-    weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-2)
-    warmup = 350
-    lr_decay_every = 2
-    lr_decay_rate = trial.suggest_uniform('lr_decay_rate', 0.5, 1)
+        iterater = training.TrainIterater(batch_size=batch_size, data_dir=data_dir)
+        score = iterater.iterate_epoch(nfm, lr, epoch=500, weight_decay=weight_decay, warmup=warmup, 
+                                lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
 
-    iterater = training.TrainIterater(batch_size=batch_size, data_dir=data_dir)
-    score = iterater.iterate_epoch(nfm, lr, epoch=3000, weight_decay=weight_decay, warmup=warmup, 
-                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
-
-    torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
+        score_sum += score
 
     mi, sec = time_since(time.time() - start)
     print('{}m{}sec'.format(mi, sec))
 
-    return -1 * score
+    return -1 * score_sum / 2
 
 
 if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./beauty_hyparams_result.csv')
-    with open('beauty_best_param', 'wb') as f:
+    df.to_csv('./result_luxury_2cross/beauty_hyparams_result.csv')
+    with open('./result_luxury_2cross/beauty_best_param', 'wb') as f:
         pickle.dump(study.best_params, f)
