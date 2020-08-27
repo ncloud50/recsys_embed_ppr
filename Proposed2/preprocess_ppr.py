@@ -13,6 +13,9 @@ import optuna
 data_dir = '../data_luxury_5core/valid2/'
 triplet_df = pd.read_csv(data_dir + 'triplet.csv')
 edges = [[r[0], r[1]] for r in triplet_df.values]
+for r in triplet_df.values:
+    if r[2] == 0:
+        edges.append([r[1], r[0]])
 
 entity_list = []
 user_list =[]

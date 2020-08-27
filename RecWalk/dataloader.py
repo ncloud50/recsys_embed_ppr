@@ -8,19 +8,24 @@ import numpy as np
 class AmazonDataset:
 
 
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, model_name='DistMulti'):
         self.data_dir = data_dir
         if not self.data_dir.endswith('/'):
             self.data_dir += '/'
 
+        self.model_name = model_name
         self.load_triplet()
         self.load_user_items_dict()
+
+        # TransEの時だけ使う辞書
+        if model_name == 'TransE' or model_name == 'SparseTransE':
+            self.relation_aggregate(self.nega_triplet_df)
 
 
     def load_triplet(self):
         self.user_item_test_df = pd.read_csv(self.data_dir + 'user_item_test.csv')
         self.triplet_df = pd.read_csv(self.data_dir + 'triplet.csv')
-        self.nega_triplet_df = pd.read_csv(self.data_dir + 'nega_triplet.csv')
+        #self.nega_triplet_df = pd.read_csv(self.data_dir + 'nega_triplet.csv')
 
         self.user_list = []
         self.item_list = []
@@ -46,7 +51,7 @@ class AmazonDataset:
         self.item_idx = [self.entity_list.index(i) for i in self.item_list]
         self.brand_idx = [self.entity_list.index(b) for b in self.brand_list]
 
-        self.y_train = np.loadtxt(self.data_dir + 'y_train.txt')
+        #self.y_train = np.loadtxt(self.data_dir + 'y_train.txt')
                 
                 
     def load_user_items_dict(self):
@@ -63,7 +68,6 @@ class AmazonDataset:
 
         self.relation_entity_dict = relation_entity_dict
 
-'''
     def get_batch(self, batch_size=2):
 
         if self.model_name == 'DistMulti':
@@ -124,4 +128,4 @@ class AmazonDataset:
             nega_batch.append(nega_tri)
     
         return np.array(nega_batch)
-'''
+            

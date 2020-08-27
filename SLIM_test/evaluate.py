@@ -37,7 +37,6 @@ class Evaluater():
 
     def topn_map(self, sorted_idx, user):
         mean_avg_pre = 0
-        not_count = 0
         if len(self.user_items_dict[user]) == 0:
             return 2
 

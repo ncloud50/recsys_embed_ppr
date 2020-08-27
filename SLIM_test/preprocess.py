@@ -37,7 +37,7 @@ def user_item_id(user_item_values, user_list, item_list):
 
 def func():
     # データ読み込み
-    user_item_df_no_id = pd.read_csv('../All_Beauty/user_item.csv')
+    user_item_df_no_id = pd.read_csv('./user_item.csv')
     item_list = list(set(list(user_item_df_no_id['asin'])))
     user_list = list(set(list(user_item_df_no_id['reviewerID'])))
     print('item size: {}'.format(len(item_list)))

@@ -68,7 +68,7 @@ def objective(trial):
 
         iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir[i], model_name=model_name)
 
-        iterater.iterate_epoch(ppr_transe, lr=lr, epoch=3000, weight_decay=weight_decay, 
+        iterater.iterate_epoch(ppr_transe, lr=lr, epoch=2000, weight_decay=weight_decay, 
                                 lambda_=lambda_, warmup=warmup,
                                 lr_decay_rate=lr_decay_rate,
                                 lr_decay_every=lr_decay_every, eval_every=1e+5)
