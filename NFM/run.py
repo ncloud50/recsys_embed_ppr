@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import sys
 
 import dataloader
 import evaluate
@@ -32,7 +33,7 @@ def objective(trial):
     gc.collect()
     
     score_sum = 0
-    data_dirs = ['../data_luxury_5core/valid1/bpr', '../data_luxury_5core/valid2/bpr']
+    data_dirs = ['../' + data_path + '/valid1/bpr', '../' + data_path + '/valid2/bpr']
     for data_dir in data_dirs:
         dataset = dataloader.AmazonDataset(data_dir)
         embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
@@ -49,7 +50,7 @@ def objective(trial):
         lr_decay_rate = trial.suggest_uniform('lr_decay_rate', 0.5, 1)
 
         iterater = training.TrainIterater(batch_size=batch_size, data_dir=data_dir)
-        score = iterater.iterate_epoch(nfm, lr, epoch=2000, weight_decay=weight_decay, warmup=warmup, 
+        score = iterater.iterate_epoch(nfm, lr, epoch=1, weight_decay=weight_decay, warmup=warmup, 
                                 lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
 
         torch.cuda.empty_cache()
@@ -62,9 +63,18 @@ def objective(trial):
 
 
 if __name__ == '__main__':
+
+    args = sys.argv
+    amazon_data = args[1]
+    save_path = 'result_' + amazon_data
+    if amazon_data[0] == 'b':
+        data_path = 'data_' + amazon_data + '_2core'
+    elif amazon_data[0] == 'l':
+        data_path = 'data_' + amazon_data + '_5core'
+
     study = optuna.create_study()
-    study.optimize(objective, n_trials=50)
+    study.optimize(objective, n_trials=1)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result_luxury_2cross/beauty_hyparams_result.csv')
-    with open('./result_luxury_2cross/beauty_best_param', 'wb') as f:
+    df.to_csv(save_path + '/beauty_hyparams_result.csv')
+    with open(save_path + '/beauty_best_param', 'wb') as f:
         pickle.dump(study.best_params, f)
