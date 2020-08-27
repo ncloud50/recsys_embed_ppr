@@ -72,19 +72,22 @@ def mk_sparse_sim_mat(model, dataset, gamma):
     item_embed = model.entity_embed(item_idx)
     #item_embed = item_embed / torch.norm(item_embed, dim=1).view(item_embed.shape[0], -1)
     # 負の要素は0にする
-    item_sim_mat = F.relu(torch.mm(item_embed, torch.t(item_embed)))
+    #item_sim_mat = F.relu(torch.mm(item_embed, torch.t(item_embed)))
+    item_sim_mat = torch.mm(item_embed, torch.t(item_embed))
     item_sim_mat = gamma[0] * scipy.sparse.csr_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
 
     user_embed = model.entity_embed(user_idx)
     #user_embed = user_embed / torch.norm(user_embed, dim=1).view(user_embed.shape[0], -1)
     # 負の要素は0にする
-    user_sim_mat = F.relu(torch.mm(user_embed, torch.t(user_embed)))
+    # user_sim_mat = F.relu(torch.mm(user_embed, torch.t(user_embed)))
+    user_sim_mat = torch.mm(user_embed, torch.t(user_embed))
     user_sim_mat = gamma[1] * scipy.sparse.csr_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
 
     brand_embed = model.entity_embed(brand_idx)
     #brand_embed = brand_embed / torch.norm(brand_embed, dim=1).view(brand_embed.shape[0], -1)
     # 負の要素は0にする
-    brand_sim_mat = F.relu(torch.mm(brand_embed, torch.t(brand_embed)))
+    #brand_sim_mat = F.relu(torch.mm(brand_embed, torch.t(brand_embed)))
+    brand_sim_mat = torch.mm(brand_embed, torch.t(brand_embed))
     brand_sim_mat = gamma[2] * scipy.sparse.csr_matrix(brand_sim_mat.to('cpu').detach().numpy().copy())
 
     M = scipy.sparse.block_diag((item_sim_mat, user_sim_mat, brand_sim_mat))
