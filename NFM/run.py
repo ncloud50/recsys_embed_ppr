@@ -50,7 +50,7 @@ def objective(trial):
         lr_decay_rate = trial.suggest_uniform('lr_decay_rate', 0.5, 1)
 
         iterater = training.TrainIterater(batch_size=batch_size, data_dir=data_dir)
-        score = iterater.iterate_epoch(nfm, lr, epoch=1, weight_decay=weight_decay, warmup=warmup, 
+        score = iterater.iterate_epoch(nfm, lr, epoch=2000, weight_decay=weight_decay, warmup=warmup, 
                                 lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
 
         torch.cuda.empty_cache()
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         data_path = 'data_' + amazon_data + '_5core'
 
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=50)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv(save_path + '/beauty_hyparams_result.csv')
     with open(save_path + '/beauty_best_param', 'wb') as f:
