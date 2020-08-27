@@ -55,7 +55,7 @@ def objective(trial):
 
 
 if __name__ == '__main__':
-    params = load_param('./result')
+    params = load_param('./result_luxury_2cross')
     embedding_dim = params['embedding_dim']
     batch_size = params['batch_size']
     lr = params['lr']
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     lr_decay_every = params['lr_decay_every']
     lr_decay_rate = params['lr_decay_rate']
 
-    data_dir = '../data/bpr'
+    data_dir = '../data_luxury_5core/test/bpr'
     dataset = AmazonDataset(data_dir)
     bpr = BPR(int(embedding_dim), len(dataset.user_list), len(dataset.item_list)).to(device)
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir)
