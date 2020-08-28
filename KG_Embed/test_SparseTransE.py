@@ -50,7 +50,7 @@ if __name__ == '__main__':
     gc.collect()
 
     # dataload
-    data_dir = '../' + data_path
+    data_dir = '../' + data_path + '/test/'
     dataset = AmazonDataset(data_dir, model_name='SparseTransE')
     
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
