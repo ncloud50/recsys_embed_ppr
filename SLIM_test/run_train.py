@@ -19,7 +19,7 @@ lin_model = 'elastic'
 def objective(trial):
     start = time.time()
 
-    data_dirs = ['../' + data_path + '/valid1/bpr/', '../' data_path + '/valid2/bpr/']
+    data_dirs = ['../' + data_path + '/valid1/bpr/', '../' + data_path + '/valid2/bpr/']
     score_sum = 0
 
     # ハイパラ

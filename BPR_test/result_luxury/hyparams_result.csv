@@ -1,2 +1,0 @@
-,number,value,datetime_start,datetime_complete,duration,params_batch_size,params_embedding_dim,params_lr,params_lr_decay_every,params_lr_decay_rate,params_warmup,params_weight_decay,state
-0,0,-0.006060640954481746,2020-08-27 06:37:43.699127,2020-08-27 06:38:46.540872,0 days 00:01:02.841745000,64.0,48.0,0.0006373551908402782,4,0.639039471260041,203,0.004923207271925152,COMPLETE
