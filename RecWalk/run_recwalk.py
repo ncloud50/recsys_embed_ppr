@@ -11,6 +11,7 @@ from SLIM_model import SLIM
 from dataloader import AmazonDataset
 import optuna
 import time
+import sys
 
 from evaluate import Evaluater
 
@@ -197,7 +198,7 @@ def objective(trial):
     beta = trial.suggest_uniform('beta', 0, 0.5)
 
 
-    data_dirs = ['../data_luxury_5core/valid1/', '../data_luxury_5core/valid2/']
+    data_dirs = ['../' + data_path + '/valid1/', '../' + data_path + '/valid2/']
     score_sum = 0
     for data_dir in data_dirs:
         # dataload
@@ -237,17 +238,25 @@ def time_since(runtime):
 
 
 if __name__ == '__main__':
+    args = sys.argv
+    amazon_data = args[1]
+    save_path = 'result_' + amazon_data
+    if amazon_data[0] == 'b':
+        data_path = 'data_' + amazon_data + '_2core'
+    elif amazon_data[0] == 'l':
+        data_path = 'data_' + amazon_data + '_5core'
+
     # SLIMのハイパラをロードする
-    slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
-    data_dirs = ['../data_luxury_5core/valid1/', '../data_luxury_5core/valid2/']
-    for data_dir in data_dirs:
-        #slim_train = pd.read_csv(data_dir + 'bpr/user_item_train.csv')
-        slim = train_SLIM(slim_param, data_dir)
+    # slim_param = pickle.load(open('best_param_slim.pickle', 'rb'))
+    # data_dirs = ['../' + data_path + '/valid1/', '../' + data_path + '/valid2/']
+    # for data_dir in data_dirs:
+        ###slim_train = pd.read_csv(data_dir + 'bpr/user_item_train.csv')
+    #    slim = train_SLIM(slim_param, data_dir)
 
     study = optuna.create_study()
-    study.optimize(objective, n_trials=20)
+    study.optimize(objective, n_trials=1)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./hyparams_result_no_item-item_relation.csv')
+    df.to_csv(save_path + '/hyparams.csv')
     # save best params 
-    with open('best_param_no_item-item_relation.pickle', 'wb') as f:
+    with open(save_path + 'best_param.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
