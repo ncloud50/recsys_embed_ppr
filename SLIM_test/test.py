@@ -63,6 +63,4 @@ if __name__ == '__main__':
 
     score = -1 * (score_sum / (len(user_list) - not_count))
     print(score)
-    #np.savetxt('score.txt', np.array([score]))
-
-
+    np.savetxt('score.txt', np.array([score]))
