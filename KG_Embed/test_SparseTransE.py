@@ -8,6 +8,7 @@ import optuna
 import numpy as np
 import pickle
 import time
+import sys
 
 import torch
 from importlib import reload
@@ -25,7 +26,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_name = 'SparseTransE'
 
 def load_params():
-    return pickle.load(open('./result/best_param_SparseTransE.pickle', 'rb'))
+    return pickle.load(open(save_path + '/best_param_SparseTransE.pickle', 'rb'))
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -33,14 +34,24 @@ def time_since(runtime):
     return (mi, sec)
 
 if __name__ == '__main__':
+
+    args = sys.argv
+    amazon_data = args[1]
+    save_path = 'result_' + amazon_data
+    if amazon_data[0] == 'b':
+        data_path = 'data_' + amazon_data + '_2core'
+    elif amazon_data[0] == 'l':
+        data_path = 'data_' + amazon_data + '_5core'
+
     params = load_params()
+    print(params)
 
     import gc
     gc.collect()
 
     # dataload
-    data_dir = '../data'
-    dataset = AmazonDataset(data_dir, model_name='TransE')
+    data_dir = '../' + data_path
+    dataset = AmazonDataset(data_dir, model_name='SparseTransE')
     
     relation_size = len(set(list(dataset.triplet_df['relation'].values)))
     entity_size = len(dataset.entity_list)
@@ -63,7 +74,7 @@ if __name__ == '__main__':
     
     torch.cuda.empty_cache()
 
-    np.savetxt('score_sparse_transe.txt', np.array([score]))
+    np.savetxt(save_path + 'score_sparse_transe.txt', np.array([score]))
 
 
 
