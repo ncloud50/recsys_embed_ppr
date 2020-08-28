@@ -18,6 +18,7 @@ from evaluate import Evaluater
 
 import optuna
 import time 
+import sys
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -365,7 +366,7 @@ def objective(trial):
     gamma3 = trial.suggest_uniform('gamma3', 0, 1)
     gamma = [gamma1, gamma2, gamma3]
     
-    data_dir = ['../data_luxury_5core/valid1', '../data_luxury_5core/valid2']
+    data_dir = ['../' + data_path + '/valid1', '../' + data_path + '/valid2']
     score_sum = 0
     for i in range(len(data_dir)):
         # dataload
@@ -395,11 +396,19 @@ def objective(trial):
 
 
 if __name__ == '__main__':
+    args = sys.argv
+    amazon_data = args[1]
+    save_path = 'result_' + amazon_data
+    if amazon_data[0] == 'b':
+        data_path = 'data_' + amazon_data + '_2core'
+    elif amazon_data[0] == 'l':
+        data_path = 'data_' + amazon_data + '_5core'
+
     # kg_embedハイパラ
     kgembed_param = pickle.load(open('./kgembed_params/best_param_SparseTransE.pickle', 'rb'))
     start = time.time()
-    model1 = train_embed('../data_luxury_5core/valid1', kgembed_param, 'SparseTransE')
-    model2 = train_embed('../data_luxury_5core/valid2', kgembed_param, 'SparseTransE')
+    model1 = train_embed('../' + data_path + '/valid1', kgembed_param, 'SparseTransE')
+    model2 = train_embed('../' + data_path + '/valid2', kgembed_param, 'SparseTransE')
     model = [model1, model2]
     mi, sec = time_since(time.time() - start)
     print(mi, sec)
@@ -409,6 +418,6 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=50)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result_luxury_2cross/hyparams_result_regTransE_relu.csv')
-    with open('./result_luxury_2cross/best_param_regTransE.pickle', 'wb') as f:
+    df.to_csv(save_path + '/hyparams_result_regTransE_relu.csv')
+    with open(save_path + '/best_param_regTransE.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
