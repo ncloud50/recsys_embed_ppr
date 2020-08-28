@@ -30,7 +30,8 @@ def time_since(runtime):
 
 
 if __name__ == '__main__':
-    data_dir = '../data/bpr'
+    #data_dir = '../data/bpr'
+    data_dir = '../data_luxury_5core/test/bpr/'
     params = load_params()
 
     dataset = dataloader.AmazonDataset(data_dir)
