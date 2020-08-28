@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import pickle
 import time
+import sys
 
 import optuna
 
@@ -18,7 +19,7 @@ lin_model = 'elastic'
 def objective(trial):
     start = time.time()
 
-    data_dirs = ['../data_luxury_5core/valid1/bpr/', '../data_luxury_5core/valid2/bpr/']
+    data_dirs = ['../' + data_path + '/valid1/bpr/', '../' data_path + '/valid2/bpr/']
     score_sum = 0
 
     # ハイパラ
@@ -71,11 +72,19 @@ def objective(trial):
 
 
 if __name__ == '__main__':
+    args = sys.argv
+    amazon_data = args[1]
+    save_path = 'result_' + amazon_data
+    if amazon_data[0] == 'b':
+        data_path = 'data_' + amazon_data + '_2core'
+    elif amazon_data[0] == 'l':
+        data_path = 'data_' + amazon_data + '_5core'
+
     study = optuna.create_study()
     study.optimize(objective, n_trials=20)
 
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result/hyparams.csv')
+    df.to_csv(save_path + '/hyparams.csv')
     # save best params 
-    with open('./result/best_param.pickle', 'wb') as f:
+    with open(save_path + '/best_param.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
