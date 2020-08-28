@@ -8,20 +8,13 @@ import optuna
 import numpy as np
 import pickle
 import time
+import sys
 
 import torch
 from importlib import reload
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-# ハイパラ
-# 
-# embed_dim
-# batch_size
-# weight_decay, lr, warmup, lr_decay_every, lr_decay_rate
-# kg embed model
-#model_name = 'TransE'
 
 model_name = 'TransE'
 
@@ -35,7 +28,7 @@ def objective(trial):
     import gc
     gc.collect()
 
-    data_dir = ['../data_luxury_5core/valid1', '../data_luxury_5core/valid2']
+    data_dir = ['../' + data_path + '/valid1', '../' + data_path + '/valid2']
     score_sum = 0
 
     # hyper para
@@ -62,7 +55,7 @@ def objective(trial):
         
         score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                             lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5, 
-                            early_stop=True)
+                            early_stop=False)
 
         score_sum += score 
     
@@ -75,9 +68,17 @@ def objective(trial):
 
 
 if __name__ == '__main__':
+    args = sys.argv
+    amazon_data = args[1]
+    save_path = 'result_' + amazon_data
+    if amazon_data[0] == 'b':
+        data_path = 'data_' + amazon_data + '_2core'
+    elif amazon_data[0] == 'l':
+        data_path = 'data_' + amazon_data + '_5core'
+
     study = optuna.create_study()
     study.optimize(objective, n_trials=50)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv('./result_luxury_2cross/hyparams_result_TransE_es.csv')
-    with open('./result_luxury_2cross/best_param_TransE_es.pickle', 'wb') as f:
+    df.to_csv(save_path + '/hyparams_result_TransE.csv')
+    with open(save_path + '/best_param_TransE.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
