@@ -38,7 +38,7 @@ class DistMulti(nn.Module):
 
 class TransE(nn.Module):
 
-    def __init__(self, embedding_dim, relation_size, entity_size, gamma=1):
+    def __init__(self, embedding_dim, relation_size, entity_size, gamma=1, alpha=None):
         super(TransE, self).__init__()
         self.embedding_dim = embedding_dim
 
