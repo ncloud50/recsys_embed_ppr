@@ -58,7 +58,7 @@ def objective(trial):
         iterater = TrainIterater(batch_size=int(batch_size), data_dir=dir_path, model_name=model_name)
         score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                             lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5, 
-                            early_stop=False)
+                            early_stop=True)
 
         score_sum += score 
     
