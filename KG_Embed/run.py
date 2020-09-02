@@ -16,7 +16,6 @@ from importlib import reload
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-#model_name = 'TransE'
 
 def time_since(runtime):
     mi = int(runtime / 60)
@@ -57,7 +56,7 @@ def objective(trial):
         #model = TransE(int(embedding_dim), relation_size, entity_size).to(device)
         model = embed_model[model_name](int(embedding_dim), relation_size, entity_size).to(device)
         iterater = TrainIterater(batch_size=int(batch_size), data_dir=dir_path, model_name=model_name)
-        score =iterater.iterate_epoch(model, lr=lr, epoch=1, weight_decay=weight_decay, warmup=warmup,
+        score =iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                             lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5, 
                             early_stop=False)
 
@@ -83,12 +82,8 @@ if __name__ == '__main__':
     model_name = args[2]
     
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=30)
     df = study.trials_dataframe() # pandasのDataFrame形式
-
-    #df.to_csv(save_path + '/hyparams_result_TransE.csv')
-    #with open(save_path + '/best_param_TransE.pickle', 'wb') as f:
-    #    pickle.dump(study.best_params, f)
 
     df.to_csv(save_path + '/hyparams_result_' + model_name + '.csv')
     with open(save_path + '/best_param_' + model_name + '.pickle', 'wb') as f:
