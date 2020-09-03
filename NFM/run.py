@@ -51,7 +51,8 @@ def objective(trial):
 
         iterater = training.TrainIterater(batch_size=batch_size, data_dir=data_dir)
         score = iterater.iterate_epoch(nfm, lr, epoch=2000, weight_decay=weight_decay, warmup=warmup, 
-                                lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
+                                lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5, 
+                                early_stop=True)
 
         torch.cuda.empty_cache()
         score_sum += score
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     amazon_data = args[1]
     save_path = 'result_' + amazon_data
     if amazon_data[0] == 'b':
-        data_path = 'data_' + amazon_data + '_2core'
+        data_path = 'data_' + amazon_data + '_2core_es'
     elif amazon_data[0] == 'l':
         data_path = 'data_' + amazon_data + '_5core'
 
