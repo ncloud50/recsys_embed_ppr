@@ -6,6 +6,7 @@ from importlib import reload
 
 import dataloader
 import evaluate
+import earlystop
 
 import numpy as np
 import torch
@@ -95,7 +96,11 @@ class TrainIterater():
 
                 
     def iterate_epoch(self, model, lr, epoch, optimizer='Adam', weight_decay=0, 
-                      warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5):
+                      warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5, early_stop=False):
+
+        if early_stop:
+            es = earlystop.EarlyStop(self.data_dir[0:-11] + 'early_stopping/bpr/', patience=6)
+
         eval_model = evaluate.Evaluater(self.data_dir)
         plot_loss_list = []
         plot_score_list = []
@@ -104,6 +109,13 @@ class TrainIterater():
             plot_loss_list.extend(self.iterate_train(model, lr=lr, optimizer=optimizer, 
                                                      weight_decay=weight_decay, print_every=1e+5))
             
+            # early stop
+            if early_stop:
+                pre_model = es.early_stop(model)
+                if pre_model:
+                    print('Early Stop eposh: {}'.format(i+1))
+                    return eval_model.topn_map(pre_model)
+
             # lrスケジューリング
             if i > warmup:
                 if (i - warmup) % lr_decay_every == 0:
