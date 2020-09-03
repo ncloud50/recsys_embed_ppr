@@ -75,7 +75,7 @@ if __name__ == '__main__':
     
     torch.cuda.empty_cache()
 
-    np.savetxt(save_path + 'score_sparse_transe.txt', np.array([score]))
+    np.savetxt(save_path + '/score_sparse_transe.txt', np.array([score]))
 
 
 
