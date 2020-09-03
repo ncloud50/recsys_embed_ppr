@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import pickle
+import sys
 
 def negative_sampling(triplet_df, user_list, item_list, 
                       brand_list, entity_list, entity_type, relation_type):
@@ -97,7 +98,6 @@ def mk_triplet(train_df):
             also_item_id = entity_list.index(a_i[1:-1])
             triplet_df.append([item_id, also_item_id, relation_type.index('i_also_buy_i')])
 
-
     for row in item_view_item_df.values:
         if row[0] not in entity_list:
             continue
@@ -113,7 +113,6 @@ def mk_triplet(train_df):
             if a_i[1:-1] not in entity_list: continue
             also_item_id = entity_list.index(a_i[1:-1])
             triplet_df.append([item_id, also_item_id, relation_type.index('i_also_view_i')])
-
 
     triplet_df = pd.DataFrame(triplet_df, columns=['h_entity', 't_entity', 'relation'])
 
@@ -217,18 +216,63 @@ def mk_valid(dir, train_df, test_df):
 
 
 
+def mk_es_valid(dir, train_df):
+
+
+    # BPR用のtrain_dfのID化
+    _train_bpr_df = id_train_bpr_df(train_df)
+    _train_bpr_df.to_csv(dir + 'bpr/user_item_train.csv', index=False)
+
+    # tripletを作る
+    _triplet_df = mk_triplet(train_df)
+    _triplet_df.to_csv(dir + 'triplet.csv', index=False)
+
+
+    # negative sampling
+    _nega_triplet_df = negative_sampling(_triplet_df, user_list, item_list, 
+                      brand_list, entity_list, entity_type, relation_type)
+
+    _user_item_train_nega_bpr_df = negative_sampling_bpr(_train_bpr_df, user_list,
+                                       item_list)
+    _nega_triplet_df.to_csv(dir + 'nega_triplet.csv', index=False)
+    _user_item_train_nega_bpr_df.to_csv(dir + 'bpr/user_item_train_nega.csv', index=False)
+
+
+    # trainデータに対するtargetを作る
+    y_train = np.array([1 for i in range(len(_triplet_df))] + [0 for i in range(len(_nega_triplet_df))])
+    #保存
+    np.savetxt(dir + '/y_train.txt', y_train)
+
+
+    # user aggregate item
+    _nega_bpr_dict = user_aggregate_item_bpr(_user_item_train_nega_bpr_df)
+    
+    with open(dir + 'bpr/user_items_nega_dict.pickle', 'wb') as f:
+        pickle.dump(_nega_bpr_dict, f)
+
+
+
 
 if __name__ == '__main__':
+    args = sys.argv
+
     # 保存ディレクトリ
-    dir_test = './data_luxury_5core/test/'
-    dir_valid1 = './data_luxury_5core/valid1/'
-    dir_valid2 = './data_luxury_5core/valid2/'
+    #dir_test = './data_luxury_5core/test/'
+    #dir_valid1 = './data_luxury_5core/valid1/'
+    #dir_valid2 = './data_luxury_5core/valid2/'
+    dir_test = args[1] + '/test/'
+    dir_valid1 = args[1] + '/valid1/'
+    dir_valid2 = args[1] + '/valid2/'
 
     # データ読み込み
-    user_item_df = pd.read_csv('./Luxury_5core/user_item.csv')
-    item_brand_df = pd.read_csv('./Luxury_5core/item_brand.csv')
-    item_buy_item_df = pd.read_csv('./Luxury_5core/item_buy_item.csv')
-    item_view_item_df = pd.read_csv('./Luxury_5core/item_view_item.csv')
+    #user_item_df = pd.read_csv('./Luxury_5core/user_item.csv')
+    #item_brand_df = pd.read_csv('./Luxury_5core/item_brand.csv')
+    #item_buy_item_df = pd.read_csv('./Luxury_5core/item_buy_item.csv')
+    #item_view_item_df = pd.read_csv('./Luxury_5core/item_view_item.csv')
+    user_item_df = pd.read_csv(args[2] + '/user_item.csv')
+    item_brand_df = pd.read_csv(args[2] + '/item_brand.csv')
+    item_buy_item_df = pd.read_csv(args[2] + '/item_buy_item.csv')
+    item_view_item_df = pd.read_csv(args[2] + '/item_view_item.csv')
 
     entity_type = ['user', 'item', 'brand']
     relation_type = ['u_buy_i', 'i_belong_b', 'i_also_buy_i', 'i_also_view_i']
@@ -267,19 +311,29 @@ if __name__ == '__main__':
 
 
     # user-itemインタラクションをスプリットする
+    # Early Stoppingようのvalidデータをつくる
     user_item_df = user_item_df.take(np.random.permutation(len(user_item_df)))
-    train_num = int(2/3 * len(user_item_df))
+    train_num = int(3/4 * len(user_item_df))
     user_item_train_df = user_item_df[0:train_num]
+    valid_num = int(1/3 * len(user_item_train_df))
+    user_item_valid_df = user_item_train_df[0:valid_num]
+    user_item_train_df = user_item_train_df[valid_num:]
     user_item_test_df = user_item_df[train_num:]
 
-    print('train {}'.format(train_num))
-    print('test {}'.format(len(user_item_test_df)))
+    print('train num {}'.format(len(user_item_train_df)))
+    print('vaid num {}'.format(len(user_item_valid_df)))
+    print('test num {}'.format(len(user_item_test_df)))
 
-    # validデータを作る
+    #print('train {}'.format(train_num))
+    #print('test {}'.format(len(user_item_test_df)))
+
+    # early stopping用にデータを作る
+    mk_es_valid(args[1] + '/early_stopping/', user_item_valid_df)
+
+    # 2cross validデータを作る
     valid_num = int(0.5 * len(user_item_train_df))
     mk_valid(dir_valid1, user_item_train_df[:valid_num], user_item_train_df[valid_num:])
     mk_valid(dir_valid2, user_item_train_df[valid_num:], user_item_train_df[:valid_num])
-
 
     # test_dfをid化
     user_item_test_df, user_item_test_bpr_df = id_test_df(user_item_test_df)
