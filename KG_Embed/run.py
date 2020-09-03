@@ -75,7 +75,7 @@ if __name__ == '__main__':
     amazon_data = args[1]
     save_path = 'result_' + amazon_data
     if amazon_data[0] == 'b':
-        data_path = 'data_' + amazon_data + '_2core'
+        data_path = 'data_' + amazon_data + '_2core_es'
     elif amazon_data[0] == 'l':
         data_path = 'data_' + amazon_data + '_5core'
 
