@@ -1,6 +1,6 @@
 from dataloader import AmazonDataset
 import models
-from models import DistMulti, TransE, SparseTransE
+from models import DistMulti, TransE, SparseTransE, Complex
 from training import TrainIterater
 from evaluate import Evaluater
 
@@ -30,7 +30,7 @@ def objective(trial):
     data_dir = ['../' + data_path + '/valid1', '../' + data_path + '/valid2']
     score_sum = 0
 
-    embed_model = {'TransE': TransE, 'SparseTransE': SparseTransE}
+    embed_model = {'TransE': TransE, 'SparseTransE': SparseTransE, 'Complex': Complex}
     # hyper para
     embedding_dim = trial.suggest_discrete_uniform('embedding_dim', 16, 128, 16)
 
