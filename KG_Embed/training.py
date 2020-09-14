@@ -147,7 +147,8 @@ class TrainIterater():
     def iterate_epoch(self, model, lr, epoch, weight_decay=0,
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5, early_stop=False):
         eval_model = Evaluater(self.data_dir , model_name=self.model_name)
-        es = EarlyStop(self.data_dir[0:-6] + 'early_stopping/', self.model_name, patience=6)
+        #es = EarlyStop(self.data_dir[0:-6] + 'early_stopping/', self.model_name, patience=6)
+        es = EarlyStop('../data_beauty_2core_es/early_stopping/', self.model_name, patience=6)
         plot_loss_list = []
         plot_score_list = []
 
