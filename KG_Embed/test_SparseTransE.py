@@ -42,7 +42,7 @@ if __name__ == '__main__':
     elif amazon_data[0] == 'l':
         data_path = 'data_' + amazon_data + '_5core'
 
-    model_name = args[2]
+    model_name = 'SparseTransE'
 
     params = load_params()
     print(params)

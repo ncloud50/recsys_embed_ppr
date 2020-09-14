@@ -63,7 +63,7 @@ if __name__ == '__main__':
     lr = params['lr']
     weight_decay = params['weight_decay']
     
-    warmup = params['warmup']
+    warmup = 350
     lr_decay_every = 2
     lr_decay_rate = params['lr_decay_rate']
     
