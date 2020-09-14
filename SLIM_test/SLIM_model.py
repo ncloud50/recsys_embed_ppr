@@ -8,6 +8,7 @@ from joblib import Parallel, delayed
 
 #from pyglmnet import GLM
 
+import time
 
 class SLIM():
     
@@ -54,7 +55,10 @@ class SLIM():
         self.rating_mat = csr_matrix((self.data, (self.row, self.col)), shape = (self.user_num, self.item_num))
         
         # linear modelを解く
-        sim_mat = Parallel(n_jobs=-1)([delayed(self.solve_lin_model)(n) for n in range(self.item_num)])
+        #sim_mat = Parallel(n_jobs=-1)([delayed(self.solve_lin_model)(n) for n in range(int(self.item_num / 100))])
+        start = time.time()
+        sim_mat = Parallel(n_jobs=-1)([delayed(self.solve_lin_model)(n) for n in range(int(self.item_num / 1000))])
+        print(time.time() - start)
         self.sim_mat = np.concatenate(sim_mat, axis=1)
 
         

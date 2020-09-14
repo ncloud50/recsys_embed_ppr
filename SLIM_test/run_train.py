@@ -43,8 +43,8 @@ def objective(trial):
         
         # define model and fit
         model = SLIM_model.SLIM(alpha, l1_ratio, len(user_list), len(item_list), lin_model=lin_model)
-        #model.fit(user_item_train_df)
-        model.fit_multi(user_item_train_df)
+        model.fit(user_item_train_df)
+        #model.fit_multi(user_item_train_df)
         #model.load_sim_mat('./sim_mat.txt', user_item_train_df)
 
         # evaluate
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     amazon_data = args[1]
     save_path = 'result_' + amazon_data
     if amazon_data[0] == 'b':
-        data_path = 'data_' + amazon_data + '_2core'
+        data_path = 'data_' + amazon_data + '_2core_es'
     elif amazon_data[0] == 'l':
         data_path = 'data_' + amazon_data + '_5core'
 
