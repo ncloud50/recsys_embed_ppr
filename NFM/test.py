@@ -20,7 +20,7 @@ torch.manual_seed(1)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_params():
-    return pickle.load(open('./result/best_param', 'rb'))
+    return pickle.load(open('./result_beauty/best_param.pickle', 'rb'))
 
 
 def time_since(runtime):
@@ -31,7 +31,7 @@ def time_since(runtime):
 
 if __name__ == '__main__':
     #data_dir = '../data/bpr'
-    data_dir = '../data_luxury_5core/test/bpr/'
+    data_dir = '../data_beauty_2core_es/test/bpr/'
     params = load_params()
 
     dataset = dataloader.AmazonDataset(data_dir)
@@ -55,4 +55,4 @@ if __name__ == '__main__':
 
     torch.cuda.empty_cache()
 
-    np.savetxt('score.txt', np.array([score]))
+    np.savetxt('./result_beauty/score.txt', np.array([score]))
