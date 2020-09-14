@@ -99,7 +99,7 @@ class TrainIterater():
                       warmup=0, lr_decay_rate=1, lr_decay_every=10, eval_every=5, early_stop=False):
 
         if early_stop:
-            es = earlystop.EarlyStop(self.data_dir[0:-11] + 'early_stopping/bpr/', patience=6)
+            es = earlystop.EarlyStop('../data_beauty_2core_es/early_stopping/bpr/', patience=6)
 
         eval_model = evaluate.Evaluater(self.data_dir)
         plot_loss_list = []

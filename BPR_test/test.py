@@ -8,6 +8,8 @@ import pickle
 import optuna
 import torch
 import numpy as np
+import sys
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -55,7 +57,7 @@ def objective(trial):
 
 
 if __name__ == '__main__':
-    params = load_param('./result_luxury_2cross')
+    params = load_param('./result_beauty')
     embedding_dim = params['embedding_dim']
     batch_size = params['batch_size']
     lr = params['lr']
@@ -64,12 +66,13 @@ if __name__ == '__main__':
     lr_decay_every = params['lr_decay_every']
     lr_decay_rate = params['lr_decay_rate']
 
-    data_dir = '../data_luxury_5core/test/bpr'
+    data_dir = '../data_beauty_2core_es/test/bpr'
     dataset = AmazonDataset(data_dir)
     bpr = BPR(int(embedding_dim), len(dataset.user_list), len(dataset.item_list)).to(device)
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir)
     score =iterater.iterate_epoch(bpr, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
-                           lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
+                           lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5,
+                           early_stop=True)
 
     # test結果を記録
-    np.savetxt('./score.txt', np.array([score]))
+    np.savetxt('./result_beauty/score.txt', np.array([score]))
