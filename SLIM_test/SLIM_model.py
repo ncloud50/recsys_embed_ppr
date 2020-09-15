@@ -33,6 +33,7 @@ class SLIM():
         
         # linear modelを解く
         sim_mat = []
+        start = time.time()
         for i in range(self.item_num):
             X = self.del_col(i)
             y = self.rating_mat[:, i]
@@ -41,9 +42,11 @@ class SLIM():
             w = np.insert(self.reg.coef_, i, 0)[:,  np.newaxis]
             sim_mat.append(w)
     
-            #if i > 1:
-            #    break
+            if i > 3:
+                break
 
+        print(self.item_num)
+        print(time.time() - start)
         self.sim_mat = np.concatenate(sim_mat, axis=1)
 
 
