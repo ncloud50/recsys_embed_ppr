@@ -8,6 +8,9 @@ import sys
 
 import optuna
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 def time_since(runtime):
     mi = int(runtime / 60)
