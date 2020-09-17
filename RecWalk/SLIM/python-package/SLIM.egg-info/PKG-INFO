@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: SLIM
+Version: 2.0.0
+Summary: UNKNOWN
+Home-page: https://github.umn.edu/dminers/slim.git
+Author: George Karypis, Athanasios N. Nikolakopoulos, Xia Ning, Mohit Sharma, Zeren Shui
+Author-email: karypis@cs.umn.edu
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent

@@ -1,0 +1,9 @@
+setup.py
+SLIM/__init__.py
+SLIM/config.py
+SLIM/core.py
+SLIM.egg-info/PKG-INFO
+SLIM.egg-info/SOURCES.txt
+SLIM.egg-info/dependency_links.txt
+SLIM.egg-info/requires.txt
+SLIM.egg-info/top_level.txt
