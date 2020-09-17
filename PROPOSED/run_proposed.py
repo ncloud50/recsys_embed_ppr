@@ -34,7 +34,8 @@ def train_embed(data_dir, params, model_name):
     batch_size = params['batch_size']
     lr = params['lr']
     weight_decay = params['weight_decay']
-    warmup = params['warmup']
+    #warmup = params['warmup']
+    warmup = 350
     #lr_decay_every = params['lr_decay_every']
     lr_decay_every = 2
     lr_decay_rate = params['lr_decay_rate']
@@ -53,7 +54,8 @@ def train_embed(data_dir, params, model_name):
     #iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
     #                       lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
-                           lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
+                           lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5,
+                           early_stop=True)
     return model
 
 
@@ -400,7 +402,7 @@ if __name__ == '__main__':
     amazon_data = args[1]
     save_path = 'result_' + amazon_data
     if amazon_data[0] == 'b':
-        data_path = 'data_' + amazon_data + '_2core'
+        data_path = 'data_' + amazon_data + '_2core_es'
     elif amazon_data[0] == 'l':
         data_path = 'data_' + amazon_data + '_5core'
 
