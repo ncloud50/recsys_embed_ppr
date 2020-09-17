@@ -6,6 +6,7 @@ import time
 import evaluate
 import optuna
 import sys
+import pickle
 
 def get_rating_mat(user_item_train_df, user_num, item_num):
     # rating_mat
