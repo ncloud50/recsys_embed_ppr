@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.linear_model import ElasticNet, Ridge, Lasso
-
+from SLIM import SLIM, SLIMatrix
 
 class Evaluater():
     
@@ -36,6 +36,20 @@ class Evaluater():
         return precision
 
     def topn_map(self, sorted_idx, user):
+        mean_avg_pre = 0
+        if len(self.user_items_dict[user]) == 0:
+            return 2
+
+        precision_sum = 0
+        for j in self.user_items_dict[user]:
+            n = list(sorted_idx).index(j) + 1
+            precision = self.topn_precision(sorted_idx, user, n)
+            precision_sum += precision
+        
+        return precision_sum / len(self.user_items_dict[user])
+    
+
+    def topn_map2(self, sorted_idx, user):
         mean_avg_pre = 0
         if len(self.user_items_dict[user]) == 0:
             return 2
