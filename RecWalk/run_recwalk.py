@@ -300,9 +300,9 @@ if __name__ == '__main__':
         train_SLIM(data_dir, slim_param)
 
     study = optuna.create_study()
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=10)
     df = study.trials_dataframe() # pandasのDataFrame形式
     df.to_csv(save_path + '/hyparams.csv')
     # save best params 
-    with open(save_path + 'best_param.pickle', 'wb') as f:
+    with open(save_path + '/best_param.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)
