@@ -15,17 +15,17 @@ def naive_convolve(f, g):
 
     h = np.zeros([xmax, ymax], dtype=f.dtype)
 
-    #pythonではxrangeの方が高速なのでここだけ元のコードから変更
+    #pythonではrangeの方が高速なのでここだけ元のコードから変更
     #cythonならばどちらでも変わらないはず
-    for x in xrange(xmax):
-        for y in xrange(ymax):
+    for x in range(xmax):
+        for y in range(ymax):
             s_from = max(smid - x, -smid)
             s_to = min((xmax - x) - smid, smid + 1)
             t_from = max(tmid - y, -tmid)
             t_to = min((ymax - y) - tmid, tmid + 1)
             value = 0
-            for s in xrange(s_from, s_to):
-                for t in xrange(t_from, t_to):
+            for s in range(s_from, s_to):
+                for t in range(t_from, t_to):
                     v = x - smid + s
                     w = y - tmid + t
                     value += g[smid - s, tmid - t] * f[v, w]
