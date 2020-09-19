@@ -21,7 +21,6 @@ warnings.filterwarnings('ignore')
 
 
 
-
 def get_rating_mat(user_item_train_df, user_num, item_num):
     # rating_mat
     row = np.array([r[0] for r in user_item_train_df.values], dtype=int)

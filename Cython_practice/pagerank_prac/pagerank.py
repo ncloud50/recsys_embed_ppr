@@ -109,8 +109,8 @@ def pagerank_fast(G, personal_vec):
 
     ppr_mat = []
     for i in range(personal_vec.shape[1]):
-        #pr=pagerank_power(M, p=0.85, personalize=personal_vec[:, i], tol=1e-6)
-        pr=pagerank(M, p=0.85, personalize=personal_vec[:, i])
+        pr=pagerank_power(M, p=0.85, personalize=personal_vec[:, i], tol=1e-6)
+        #pr=pagerank(M, p=0.85, personalize=personal_vec[:, i])
         ppr_mat.append(pr)
     return np.array(ppr_mat)
 

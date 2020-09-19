@@ -1,6 +1,7 @@
 import networkx as nx
 from networkx.exception import NetworkXError
 from fast_pagerank import pagerank
+from fast_pagerank import pagerank_power
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -178,7 +179,7 @@ def power_iterate(N, M, x, p, dangling_weights, is_dangling, alpha, max_iter=500
 
 def pagerank_fast(G, sim_mat, personal_vec, alpha, beta):
     nodelist = G.nodes()
-    M = nx.to_scipy_sparse_matrix(G, nodelist=nodelist, weight=weight,
+    M = nx.to_scipy_sparse_matrix(G, nodelist=nodelist, weight='weight',
                                   dtype=float)
     S = scipy.array(M.sum(axis=1)).flatten()
     S[S != 0] = 1.0 / S[S != 0]
@@ -191,7 +192,7 @@ def pagerank_fast(G, sim_mat, personal_vec, alpha, beta):
 
     ppr_mat = []
     for i in range(personal_vec.shape[1]):
-        pr = pagerank(M, p=alpha, personalize=personal_vec[:, i])
+        pr = pagerank_power(M, p=alpha, personalize=personal_vec[:, i])
         ppr_mat.append(pr)
 
     return ppr_mat
