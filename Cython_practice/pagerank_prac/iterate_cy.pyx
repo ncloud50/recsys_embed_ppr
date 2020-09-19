@@ -1,7 +1,13 @@
 import scipy.sparse
 import scipy
 import numpy as np
+import scipy as sp
+import scipy.sparse as sprs
+import scipy.spatial
+import scipy.sparse.linalg
+
 cimport numpy as np
+cimport scipy as sp
 
 DTYPE = np.float
 ctypedef np.float_t DTYPE_t
@@ -40,6 +46,19 @@ cdef power_iterate(int N,
 
     return x
 
+cdef linsolve(int N, 
+              #sprs.csr_matrix[DTYPE_t] M,
+              np.ndarray[DTYPE_t, ndim=2] x,
+              np.ndarray[DTYPE_t, ndim=2] p,
+              ):
+    cdef sprs.csr_matrix I = sprs.eye(N)
+    cdef np.ndarray[DTYPE_t] ppr
+
+    ppr = sprs.sparse.linalg(I - alpha * M, (1 - alpha) * p)
+
+    return ppr
+
+
 def pagerank_cy(int N, 
                 np.ndarray[DTYPE_t, ndim=2] M,
                 np.ndarray[DTYPE_t, ndim=2] x,
@@ -68,6 +87,8 @@ def pagerank_cy(int N,
     for i in range(p.shape[1]):
         ppr = power_iterate(N, M, x, p[:, i], dangling_weights[:, i], 
                             alpha)
+        ppr = linsolve(N, M, x, p[:, i], alpha)
+
         if i == 0:
             #ppr_mat = ppr[np.newaxis, :]
             ppr_mat = ppr

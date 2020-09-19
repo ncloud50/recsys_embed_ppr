@@ -4,10 +4,15 @@ import numpy as np
 import scipy.sparse
 import time
 
-#import iterate_cy
+import iterate_cy
 
 from fast_pagerank import pagerank
 from fast_pagerank import pagerank_power
+
+from sknetwork.ranking import PageRank
+
+import warnings
+warnings.filterwarnings('ignore')
 
 def pagerank_scipy(G, personal_vec=None, alpha=0.85, beta=0.01,
                    max_iter=100, tol=1.0e-6, weight='weight',
@@ -21,6 +26,7 @@ def pagerank_scipy(G, personal_vec=None, alpha=0.85, beta=0.01,
     nodelist = G.nodes()
     M = nx.to_scipy_sparse_matrix(G, nodelist=nodelist, weight=weight,
                                   dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
     S = scipy.array(M.sum(axis=1)).flatten()
     S[S != 0] = 1.0 / S[S != 0]
     Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
@@ -123,8 +129,27 @@ def pagerank_fast_mat(M, personal_vec):
     ppr_mat = []
     for i in range(25000):
         st = time.time()
-        #pr=pagerank_power(M, p=0.85, personalize=personal_vec[:, i], tol=1e-6)
-        pr=pagerank(M, p=0.85, personalize=personal_vec[:, i])
+        pr=pagerank_power(M, p=0.85, personalize=personal_vec[:, i], tol=1e-6)
+        #pr=pagerank(M, p=0.85, personalize=personal_vec[:, i])
+        ppr_mat.append(pr)
+    return np.array(ppr_mat)
+
+def pagerank_scikit(G):
+    M = nx.to_scipy_sparse_matrix(G, nodelist=G.nodes(), weight='weight',
+                                  dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+    pagerank = PageRank()
+
+    ppr_mat = []
+    for i in range(M.shape[0]):
+        seeds = {i: 1}
+        pr = pagerank.fit_transform(M, seeds)
+        #print(pr.shape)
+        #print(pr)
+
         ppr_mat.append(pr)
     return np.array(ppr_mat)
 
@@ -132,14 +157,15 @@ def pagerank_fast_mat(M, personal_vec):
 if __name__ == '__main__':
     
     
-    #g = nx.star_graph(30000)
+    g = nx.star_graph(1000)
+    
     #n_num = 30000
-    n_num = len(n.nodes())
-    e_num = 15000
-    edges = np.random.randint(0, int(n_num), (int(e_num), 2), dtype=np.int)
-    weight = np.array([1 for i in range(e_num)])
-    A = scipy.sparse.csr_matrix(([1 for i in range(e_num)], (edges[:, 0], edges[:, 1])),
-                                shape=(n_num, n_num))
+    n_num = len(g.nodes())
+    #e_num = 15000
+    #edges = np.random.randint(0, int(n_num), (int(e_num), 2), dtype=np.int)
+    #weight = np.array([1 for i in range(e_num)])
+    #A = scipy.sparse.csr_matrix(([1 for i in range(e_num)], (edges[:, 0], edges[:, 1])),
+    #                            shape=(n_num, n_num))
 
 
     
@@ -155,11 +181,27 @@ if __name__ == '__main__':
     #ppr = pagerank_scipy(g, personal_vec)
     #print(time.time() - s)
 
-    #s = time.time()
-    #ppr = pagerank_scipy(g, personal_vec, cy=True)
-    #print(time.time() - s)
+    s = time.time()
+    ppr = pagerank_scipy(g, personal_vec, cy=True)
+    print(time.time() - s)
 
     s = time.time()
-    #ppr = pagerank_fast(g, personal_vec)
-    ppr = pagerank_fast_mat(A, personal_vec)
+    ppr = pagerank_fast(g, personal_vec)
     print(time.time() - s)
+
+    s = time.time()
+    ppr = pagerank_scikit(g)
+    print(time.time() - s)
+
+    #M = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(), weight='weight',
+                                  #dtype=float)
+    #S = scipy.array(M.sum(axis=1)).flatten()
+    #S[S != 0] = 1.0 / S[S != 0]
+    #Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    #M = Q * M
+    #M = M.todense()
+    #print(0.85 * np.dot(ppr[0], M) + (1 - 0.85) * personal_vec[:, 0])
+    #print(ppr[0])
+    
+
+    #ppr = pagerank_fast_mat(A, personal_vec)
