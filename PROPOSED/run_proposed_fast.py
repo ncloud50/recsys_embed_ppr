@@ -234,17 +234,17 @@ def pagerank_scikit(G, sim_mat, user_idx, alpha, beta):
     pagerank = PageRank(damping_factor=alpha)
 
     ppr_mat = []
-    print_every = 1
+    print_every = int(len(user_idx) / 3)
     s = time.time()
     for i in user_idx:
         seeds = {i: 1}
-        pr = pagerank(M, seeds)
+        pr = pagerank.fit_transform(M, seeds)
         ppr_mat.append(pr)
         if (i + 1) % print_every == 0:
-            print('{}% {}sec'.format(i / personal_vec.shape[1] * 100,
+            print('{}% {}sec'.format(i / len(user_idx) * 100,
                                     time.time() - s))
 
-    return ppr_mat
+    return np.array(ppr_mat)
 
 
 def item_ppr(G, dataset, sim_mat, alpha, beta):
