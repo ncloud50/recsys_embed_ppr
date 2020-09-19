@@ -96,8 +96,12 @@ def mk_sparse_sim_mat(model, dataset, gamma):
     M_ = np.array(1 - M.sum(axis=1) / np.max(M.sum(axis=1)))
                                     
     M = M / np.max(M.sum(axis=1)) + scipy.sparse.diags(M_.transpose()[0])
-    #print(type(M))
-    #print(M.shape)
+
+    # 100/p(p=90)分位数で閾値を設定 
+    data = M.data
+    thre = np.percentile(data, 99)
+    data = data[data > thre]
+    M.data = data
     return M
 
 
