@@ -78,18 +78,28 @@ def mk_sparse_sim_mat(model, dataset, gamma):
     #item_embed = item_embed / torch.norm(item_embed, dim=1).view(item_embed.shape[0], -1)
     # 負の要素は0にする
     item_sim_mat = F.relu(torch.mm(item_embed, torch.t(item_embed)))
-    item_sim_mat = gamma[0] * scipy.sparse.csr_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
 
     user_embed = model.entity_embed(user_idx)
     #user_embed = user_embed / torch.norm(user_embed, dim=1).view(user_embed.shape[0], -1)
     # 負の要素は0にする
     user_sim_mat = F.relu(torch.mm(user_embed, torch.t(user_embed)))
-    user_sim_mat = gamma[1] * scipy.sparse.csr_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
 
     brand_embed = model.entity_embed(brand_idx)
     #brand_embed = brand_embed / torch.norm(brand_embed, dim=1).view(brand_embed.shape[0], -1)
     # 負の要素は0にする
     brand_sim_mat = F.relu(torch.mm(brand_embed, torch.t(brand_embed)))
+
+    # 100/p(p=90)分位数で閾値を設定 
+    thre = np.percentile(np.concatenate([np.ravel(item_sim_mat.to('cpu').detach().numpy().copy()), 
+                                         np.ravel(user_sim_mat.to('cpu').detach().numpy().copy()),
+                                         np.ravel(brand_sim_mat.to('cpu').detach().numpy().copy())]), 99)
+
+    item_sim_mat = F.relu(item_sim_mat - thre)
+    user_sim_mat = F.relu(user_sim_mat - thre)
+    brand_sim_mat = F.relu(brand_sim_mat - thre)
+
+    item_sim_mat = gamma[0] * scipy.sparse.csr_matrix(item_sim_mat.to('cpu').detach().numpy().copy())
+    user_sim_mat = gamma[1] * scipy.sparse.csr_matrix(user_sim_mat.to('cpu').detach().numpy().copy())
     brand_sim_mat = gamma[2] * scipy.sparse.csr_matrix(brand_sim_mat.to('cpu').detach().numpy().copy())
 
     M = scipy.sparse.block_diag((item_sim_mat, user_sim_mat, brand_sim_mat))
@@ -97,11 +107,12 @@ def mk_sparse_sim_mat(model, dataset, gamma):
                                     
     M = M / np.max(M.sum(axis=1)) + scipy.sparse.diags(M_.transpose()[0])
 
-    # 100/p(p=90)分位数で閾値を設定 
-    data = M.data
-    thre = np.percentile(data, 99)
-    data = data[data > thre]
-    M.data = data
+    #data = M.data
+    #thre = np.percentile(data, 99)
+    #data = data[data > thre]
+    #M.data = data
+    print(M.shape)
+    print(len(M.data))
     return M
 
 
@@ -194,11 +205,18 @@ def pagerank_fast(G, sim_mat, personal_vec, alpha, beta):
     #sim_mat = mk_sparse_sim_mat(G, item_mat)
     M = beta * M + (1 - beta) * sim_mat
 
+    print('check')
     ppr_mat = []
+    print_every = 1
+    s = time.time()
     for i in range(personal_vec.shape[1]):
         #pr = pagerank_power(M, p=alpha, personalize=personal_vec[:, i])
         pr = pagerank(M, p=alpha, personalize=personal_vec[:, i])
         ppr_mat.append(pr)
+        if (i + 1) % print_every == 0:
+            print('{}% {}sec'.format(i / personal_vec.shape[1] * 100,
+                                    time.time() - s))
+
 
     return ppr_mat
 

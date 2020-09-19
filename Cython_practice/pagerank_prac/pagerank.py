@@ -114,28 +114,52 @@ def pagerank_fast(G, personal_vec):
         ppr_mat.append(pr)
     return np.array(ppr_mat)
 
+def pagerank_fast_mat(M, personal_vec):
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+
+    ppr_mat = []
+    for i in range(25000):
+        st = time.time()
+        #pr=pagerank_power(M, p=0.85, personalize=personal_vec[:, i], tol=1e-6)
+        pr=pagerank(M, p=0.85, personalize=personal_vec[:, i])
+        ppr_mat.append(pr)
+    return np.array(ppr_mat)
+
 
 if __name__ == '__main__':
     
-    g = nx.star_graph(3000)
+    
+    #g = nx.star_graph(30000)
+    #n_num = 30000
+    n_num = len(n.nodes())
+    e_num = 15000
+    edges = np.random.randint(0, int(n_num), (int(e_num), 2), dtype=np.int)
+    weight = np.array([1 for i in range(e_num)])
+    A = scipy.sparse.csr_matrix(([1 for i in range(e_num)], (edges[:, 0], edges[:, 1])),
+                                shape=(n_num, n_num))
+
 
     
     # personalized vecを作る
     personal_vec = []
-    for i in g.nodes():
-        val = np.zeros(len(g.nodes()))
+    for i in range(n_num):
+        val = np.zeros(n_num)
         val[i] = 1
         personal_vec.append(val[np.newaxis, :])
     personal_vec = np.concatenate(personal_vec, axis=0).transpose()
     
-    s = time.time()
-    ppr = pagerank_scipy(g, personal_vec)
-    print(time.time() - s)
+    #s = time.time()
+    #ppr = pagerank_scipy(g, personal_vec)
+    #print(time.time() - s)
 
     #s = time.time()
     #ppr = pagerank_scipy(g, personal_vec, cy=True)
     #print(time.time() - s)
 
     s = time.time()
-    ppr = pagerank_fast(g, personal_vec)
+    #ppr = pagerank_fast(g, personal_vec)
+    ppr = pagerank_fast_mat(A, personal_vec)
     print(time.time() - s)
