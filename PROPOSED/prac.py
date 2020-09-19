@@ -49,11 +49,16 @@ if __name__ == '__main__':
         #print(np.percentile(data, p))
 
     # 100/p分位数の数は？
-    for p in range(90, 101, 1):
-        print(len(data[data > np.percentile(data, p)]))
-    #print(np.percentile(data, 99))
-    #print(len(data[data > np.percentile(data, 99)]))
+    #for p in range(90, 101, 1):
+    #    print(len(data[data > np.percentile(data, p)]))
+    print(1. / M.shape[0])
 
+    print(np.percentile(data, 99.5))
+    print(len(data[data > np.percentile(data, 99.5)]))
+
+    print(np.percentile(data, 99.9))
+    print(len(data[data > np.percentile(data, 99.9)]))
+    
     sys.exit()
 
     data = M.data

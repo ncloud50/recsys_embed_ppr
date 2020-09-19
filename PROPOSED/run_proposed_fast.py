@@ -2,6 +2,7 @@ import networkx as nx
 from networkx.exception import NetworkXError
 from fast_pagerank import pagerank
 from fast_pagerank import pagerank_power
+from sknetwork.ranking import PageRank
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -92,7 +93,7 @@ def mk_sparse_sim_mat(model, dataset, gamma):
     # 100/p(p=90)分位数で閾値を設定 
     thre = np.percentile(np.concatenate([np.ravel(item_sim_mat.to('cpu').detach().numpy().copy()), 
                                          np.ravel(user_sim_mat.to('cpu').detach().numpy().copy()),
-                                         np.ravel(brand_sim_mat.to('cpu').detach().numpy().copy())]), 99)
+                                         np.ravel(brand_sim_mat.to('cpu').detach().numpy().copy())]), 99.9)
 
     item_sim_mat = F.relu(item_sim_mat - thre)
     user_sim_mat = F.relu(user_sim_mat - thre)
@@ -220,6 +221,31 @@ def pagerank_fast(G, sim_mat, personal_vec, alpha, beta):
 
     return ppr_mat
 
+def pagerank_scikit(G, sim_mat, user_idx, alpha, beta):
+    nodelist = G.nodes()
+    M = nx.to_scipy_sparse_matrix(G, nodelist=nodelist, weight='weight',
+                                  dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+    M = beta * M + (1 - beta) * sim_mat
+
+    pagerank = PageRank(damping_factor=alpha)
+
+    ppr_mat = []
+    print_every = 1
+    s = time.time()
+    for i in user_idx:
+        seeds = {i: 1}
+        pr = pagerank(M, seeds)
+        ppr_mat.append(pr)
+        if (i + 1) % print_every == 0:
+            print('{}% {}sec'.format(i / personal_vec.shape[1] * 100,
+                                    time.time() - s))
+
+    return ppr_mat
+
 
 def item_ppr(G, dataset, sim_mat, alpha, beta):
     
@@ -234,7 +260,8 @@ def item_ppr(G, dataset, sim_mat, alpha, beta):
     
     #ppr = pagerank_torch(G, sim_mat, personal_vec, alpha, beta)
     #ppr = pagerank_scipy(G, sim_mat, personal_vec, alpha, beta)
-    ppr = pagerank_fast(G, sim_mat, personal_vec, alpha, beta)
+    #ppr = pagerank_fast(G, sim_mat, personal_vec, alpha, beta)
+    ppr = pagerank_scikit(G, sim_mat, user_idx, alpha, beta)
     
     item_idx = [dataset.entity_list.index(i) for i in dataset.item_list]
     pred = ppr[:, item_idx]
@@ -255,24 +282,6 @@ def get_ranking_mat(G, dataset, model, gamma, alpha=0.85, beta=0.01):
         #break
     return ranking_mat
 
-
-def topn_precision(ranking_mat, user_items_dict, n=10):
-    not_count = 0
-    precision_sum = 0
-    user_idx = [dataset.entity_list.index(u) for u in dataset.user_list]
-        
-    for i in range(len(ranking_mat)):
-        if len(user_items_dict[user_idx[i]]) == 0:
-            not_count += 1
-            continue
-        sorted_idx = ranking_mat[i]
-        topn_idx = sorted_idx[:n]  
-        hit = len(set(topn_idx) & set(user_items_dict[user_idx[i]]))
-        #precision = hit / len(user_items_dict[user_idx[i]])
-        precision = hit / n
-        precision_sum += precision
-        
-    return precision_sum / (len(user_idx) - not_count)
 
 
 def time_since(runtime):
