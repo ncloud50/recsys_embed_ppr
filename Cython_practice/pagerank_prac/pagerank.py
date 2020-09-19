@@ -4,7 +4,7 @@ import numpy as np
 import scipy.sparse
 import time
 
-import iterate_cy
+#import iterate_cy
 
 from fast_pagerank import pagerank
 from fast_pagerank import pagerank_power
@@ -57,7 +57,6 @@ def pagerank_scipy(G, personal_vec=None, alpha=0.85, beta=0.01,
                                         #is_dangling, 
                                         alpha) 
         
-
     
     else:
 
@@ -100,7 +99,14 @@ def power_iterate(N, M, x, p, dangling_weights, is_dangling, alpha, max_iter=100
     return x
 
 
-def pagerank_fast(M, personal_vec):
+def pagerank_fast(G, personal_vec):
+    M = nx.to_scipy_sparse_matrix(G, nodelist=G.nodes(), weight='weight',
+                                  dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+
     ppr_mat = []
     for i in range(personal_vec.shape[1]):
         #pr=pagerank_power(M, p=0.85, personalize=personal_vec[:, i], tol=1e-6)
@@ -112,8 +118,6 @@ def pagerank_fast(M, personal_vec):
 if __name__ == '__main__':
     
     g = nx.star_graph(3000)
-    M = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(), weight='weight',
-                                  dtype=float)
 
     
     # personalized vecを作る
@@ -124,14 +128,14 @@ if __name__ == '__main__':
         personal_vec.append(val[np.newaxis, :])
     personal_vec = np.concatenate(personal_vec, axis=0).transpose()
     
-    #s = time.time()
-    #ppr = pagerank_scipy(g, personal_vec)
-    #print(time.time() - s)
+    s = time.time()
+    ppr = pagerank_scipy(g, personal_vec)
+    print(time.time() - s)
 
     #s = time.time()
     #ppr = pagerank_scipy(g, personal_vec, cy=True)
     #print(time.time() - s)
 
     s = time.time()
-    ppr = pagerank_fast(M, personal_vec)
+    ppr = pagerank_fast(g, personal_vec)
     print(time.time() - s)
