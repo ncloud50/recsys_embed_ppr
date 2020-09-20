@@ -10,6 +10,7 @@ from fast_pagerank import pagerank
 from fast_pagerank import pagerank_power
 
 from sknetwork.ranking import PageRank
+import scipy.sparse.linalg as linalg
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -153,11 +154,42 @@ def pagerank_scikit(G):
         ppr_mat.append(pr)
     return np.array(ppr_mat)
 
+def pagerank_lu(G, personal_vec):
+    M = nx.to_scipy_sparse_matrix(G, nodelist=G.nodes(), weight='weight',
+                                  dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+
+    alpha = 0.85
+    LU = linalg.splu(scipy.sparse.eye(M.shape[0]) - alpha * M)
+    ppr_mat = []
+    for i in range(personal_vec.shape[1]):
+        pr = LU.solve(personal_vec[i])
+        ppr_mat.append(pr)
+
+    return np.array(ppr)
+
+
+def prac():
+    A = np.array([[1, 2],
+                [1, 1]])
+
+    b = np.array([1, 2])
+    LU = linalg.splu(scipy.sparse.csr_matrix(A))
+    x = LU.solve(b)
+    print(x)
+
+
+
 
 if __name__ == '__main__':
+
+    #import sys
+    #sys.exit()
     
-    
-    g = nx.star_graph(1000)
+    g = nx.star_graph(3000)
     
     #n_num = 30000
     n_num = len(g.nodes())
@@ -181,16 +213,20 @@ if __name__ == '__main__':
     #ppr = pagerank_scipy(g, personal_vec)
     #print(time.time() - s)
 
-    s = time.time()
-    ppr = pagerank_scipy(g, personal_vec, cy=True)
-    print(time.time() - s)
+    #s = time.time()
+    #ppr = pagerank_scipy(g, personal_vec, cy=True)
+    #print(time.time() - s)
 
-    s = time.time()
-    ppr = pagerank_fast(g, personal_vec)
-    print(time.time() - s)
+    #s = time.time()
+    #ppr = pagerank_fast(g, personal_vec)
+    #print(time.time() - s)
 
     s = time.time()
     ppr = pagerank_scikit(g)
+    print(time.time() - s)
+
+    s = time.time()
+    ppr = pagerank_lu(g, personal_vec)
     print(time.time() - s)
 
     #M = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(), weight='weight',
