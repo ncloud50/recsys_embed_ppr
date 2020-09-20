@@ -93,7 +93,7 @@ def mk_sparse_sim_mat(model, dataset, gamma):
     # 100/p(p=90)分位数で閾値を設定 
     thre = np.percentile(np.concatenate([np.ravel(item_sim_mat.to('cpu').detach().numpy().copy()), 
                                          np.ravel(user_sim_mat.to('cpu').detach().numpy().copy()),
-                                         np.ravel(brand_sim_mat.to('cpu').detach().numpy().copy())]), 99.9)
+                                         np.ravel(brand_sim_mat.to('cpu').detach().numpy().copy())]), 99.5)
 
     item_sim_mat = F.relu(item_sim_mat - thre)
     user_sim_mat = F.relu(user_sim_mat - thre)
