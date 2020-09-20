@@ -4,11 +4,11 @@ import numpy as np
 import scipy.sparse
 import time
 
-import iterate_cy
 
 from fast_pagerank import pagerank
 from fast_pagerank import pagerank_power
 
+from scikits import umfpack
 from sknetwork.ranking import PageRank
 import scipy.sparse.linalg as linalg
 
@@ -53,6 +53,7 @@ def pagerank_scipy(G, personal_vec=None, alpha=0.85, beta=0.01,
 
 
     if cy:
+        import iterate_cy
         #import sys
         #sys.exit()
         #print(dangling_weights[:, 1].shape)
@@ -154,6 +155,7 @@ def pagerank_scikit(G):
         ppr_mat.append(pr)
     return np.array(ppr_mat)
 
+
 def pagerank_lu(G, personal_vec):
     M = nx.to_scipy_sparse_matrix(G, nodelist=G.nodes(), weight='weight',
                                   dtype=float)
@@ -172,12 +174,30 @@ def pagerank_lu(G, personal_vec):
     return np.array(ppr)
 
 
+def pagerank_umf(G, personal_vec):
+    M = nx.to_scipy_sparse_matrix(G, nodelist=G.nodes(), weight='weight',
+                                  dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+
+    alpha = 0.85
+    A = scipy.sparse.eye(M.shape[0]) - alpha * M
+    LU = umfpack.splu(A)
+    ppr_mat = []
+    for i in range(personal_vec.shape[1]):
+        pr = LU.solve(personal_vec[:, i])
+        pr = linalg.spsolve(A, personal_vec[:, i])
+        ppr_mat.append(pr)
+
+
 def prac():
     A = np.array([[1, 2],
                 [1, 1]])
 
     b = np.array([1, 2])
-    LU = linalg.splu(scipy.sparse.csr_matrix(A))
+    LU = linalg.spilu(scipy.sparse.csr_matrix(A))
     x = LU.solve(b)
     print(x)
 
@@ -189,7 +209,7 @@ if __name__ == '__main__':
     #import sys
     #sys.exit()
     
-    g = nx.star_graph(3000)
+    g = nx.star_graph(10000)
     
     #n_num = 30000
     n_num = len(g.nodes())
@@ -229,6 +249,10 @@ if __name__ == '__main__':
     ppr = pagerank_lu(g, personal_vec)
     print(time.time() - s)
 
+    s = time.time()
+    ppr = pagerank_umf(g, personal_vec)
+    print(time.time() - s)
+    
     #M = nx.to_scipy_sparse_matrix(g, nodelist=g.nodes(), weight='weight',
                                   #dtype=float)
     #S = scipy.array(M.sum(axis=1)).flatten()

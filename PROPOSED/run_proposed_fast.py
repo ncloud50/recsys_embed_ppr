@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse
+import scipy.sparse.linalg as linalg
 import pickle
 
 import torch
@@ -246,6 +247,32 @@ def pagerank_scikit(G, sim_mat, user_idx, alpha, beta):
 
     return np.array(ppr_mat)
 
+def pagerank_lu(G, sim_mat, personal_vec, alpha, beta):
+    nodelist = G.nodes()
+    M = nx.to_scipy_sparse_matrix(G, nodelist=nodelist, weight='weight',
+                                  dtype=float)
+    S = scipy.array(M.sum(axis=1)).flatten()
+    S[S != 0] = 1.0 / S[S != 0]
+    Q = scipy.sparse.spdiags(S.T, 0, *M.shape, format='csr')
+    M = Q * M
+
+    # 遷移行列とsim_matを統合
+    #sim_mat = mk_sparse_sim_mat(G, item_mat)
+    M = beta * M + (1 - beta) * sim_mat
+
+    ppr_mat = []
+    print_every = int(personal_vec.shape[0] / 10)
+    s = time.time()
+    LU = linalg.splu(scipy.sparse.eye(M.shape[0]) - alpha * M)
+    for i in range(personal_vec.shape[1]):
+        pr = LU.solve(personal_vec[:, i])
+        ppr_mat.append(pr)
+        if (i + 1) % print_every == 0:
+            print('{}% {}sec'.format(i / personal_vec.shape[1] * 100,
+                                    time.time() - s))
+
+    return np.array(ppr_mat)
+
 
 def item_ppr(G, dataset, sim_mat, alpha, beta):
     
@@ -262,6 +289,7 @@ def item_ppr(G, dataset, sim_mat, alpha, beta):
     #ppr = pagerank_scipy(G, sim_mat, personal_vec, alpha, beta)
     #ppr = pagerank_fast(G, sim_mat, personal_vec, alpha, beta)
     ppr = pagerank_scikit(G, sim_mat, user_idx, alpha, beta)
+    #ppr = pagerank_lu(G, sim_mat, personal_vec, alpha, beta)
     
     item_idx = [dataset.entity_list.index(i) for i in dataset.item_list]
     pred = ppr[:, item_idx]
