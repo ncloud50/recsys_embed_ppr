@@ -55,11 +55,9 @@ def train_embed(data_dir, params, model_name):
     elif model_name == 'SparseTransE':
         model = SparseTransE(int(embedding_dim), relation_size, entity_size, alpha=alpha).to(device)
     iterater = TrainIterater(batch_size=int(batch_size), data_dir=data_dir, model_name=model_name)
-    #iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
-    #                       lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5)
     iterater.iterate_epoch(model, lr=lr, epoch=3000, weight_decay=weight_decay, warmup=warmup,
                            lr_decay_rate=lr_decay_rate, lr_decay_every=lr_decay_every, eval_every=1e+5,
-                           early_stop=True)
+                           early_stop=False)
     return model
 
 
@@ -366,7 +364,7 @@ if __name__ == '__main__':
         data_path = 'data_' + amazon_data + '_5core'
 
     # kg_embedハイパラ
-    kgembed_param = pickle.load(open('./kgembed_params/best_param_TransE.pickle', 'rb'))
+    kgembed_param = pickle.load(open('./kgembed_params_luxury/best_param_TransE.pickle', 'rb'))
     start = time.time()
     model1 = train_embed('../' + data_path + '/valid1', kgembed_param, 'TransE')
     model2 = train_embed('../' + data_path + '/valid2', kgembed_param, 'TransE')
