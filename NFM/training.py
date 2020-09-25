@@ -131,6 +131,7 @@ class TrainIterater():
         
         # とりあえず最後のepochのscoreを返す
         # return eval_model.topn_precision(model)
+        #return eval_model.topn_map(model)
         return eval_model.topn_map(model)
         
         

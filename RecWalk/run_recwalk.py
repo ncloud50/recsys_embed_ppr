@@ -267,7 +267,8 @@ def objective(trial):
         evaluater = Evaluater(data_dir)
         #ranking_mat = get_ranking_mat(G, slim, alpha, beta, dataset)
         ranking_mat = get_ranking_mat(G, sim_mat, alpha, beta, dataset)
-        score = evaluater.topn_map(ranking_mat)
+        #score = evaluater.topn_map(ranking_mat)
+        score = evaluater.topn_precision(ranking_mat)
 
         score_sum += score
     
@@ -301,7 +302,7 @@ if __name__ == '__main__':
     study = optuna.create_study()
     study.optimize(objective, n_trials=10)
     df = study.trials_dataframe() # pandasのDataFrame形式
-    df.to_csv(save_path + '/hyparams.csv')
+    df.to_csv(save_path + '/hyparams_precision.csv')
     # save best params 
-    with open(save_path + '/best_param.pickle', 'wb') as f:
+    with open(save_path + '/best_param_precision.pickle', 'wb') as f:
         pickle.dump(study.best_params, f)

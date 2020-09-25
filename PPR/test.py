@@ -4,42 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import time
+import dataloader
+import evaluate
 
 import torch
 import optuna
 
-# データ読み込み
-triplet_df = pd.read_csv('../data/triplet.csv')
-edges = [[r[0], r[1]] for r in triplet_df.values]
 
-entity_list = []
-user_list =[]
-item_list = []
-with open('../data/entity_list.txt', 'r') as f:
-    for l in f:
-        entity_list.append(l.replace('\n', ''))
-        
-with open('../data/user_list.txt', 'r') as f:
-    for l in f:
-        user_list.append(l.replace('\n', ''))
-        
-with open('../data/item_list.txt', 'r') as f:
-    for l in f:
-        item_list.append(l.replace('\n', ''))
-        
-user_items_test_dict = pickle.load(open('../data/user_items_test_dict.pickle', 'rb'))
-
-user_idx = [entity_list.index(u) for u in user_list]
-
-
-# グラフを作る
-G = nx.DiGraph()
-G.add_nodes_from([i for i in range(len(entity_list))])
-G.add_edges_from(edges)
-
-# tripletに重複が存在する
-print('edges: {}'.format(len(G.edges)))
-print('nodes: {}'.format(len(G.nodes)))
 
 def load_params():
     return pickle.load(open('result/best_param.pickle', 'rb'))
@@ -105,8 +76,45 @@ def time_since(runtime):
 
 
 if __name__ == '__main__':
-    params = load_params()
-    alpha = params['alpha']
+    #params = load_params()
+    #alpha = params['alpha']
+    # データ読み込み
+
+    data_path = '../data_luxury_5core/test'
+
+    entity_list = []
+    user_list =[]
+    item_list = []
+    with open(data_path + '/entity_list.txt', 'r') as f:
+        for l in f:
+            entity_list.append(l.replace('\n', ''))
+            
+    with open(data_path + '/user_list.txt', 'r') as f:
+        for l in f:
+            user_list.append(l.replace('\n', ''))
+            
+    with open(data_path + '/item_list.txt', 'r') as f:
+        for l in f:
+            item_list.append(l.replace('\n', ''))
+            
+
+    user_idx = [entity_list.index(u) for u in user_list]
+
+    dataset = dataloader.AmazonDataset(data_path)
+    # グラフを作る
+    # user-itemとitem-userどちらの辺も追加
+    edges = [[r[0], r[1]] for r in dataset.triplet_df.values]
+    for r in dataset.triplet_df.values:
+        if r[2] == 0:
+            edges.append([r[1], r[0]])
+        
+    # load network
+    G = nx.DiGraph()
+    G.add_nodes_from([i for i in range(len(dataset.entity_list))])
+    G.add_edges_from(edges)
+
+    alpha = 0.85
     ranking_mat = get_ranking_mat(alpha)
-    score = topn_precision(ranking_mat, user_items_test_dict)
+    evaluater = evaluate.Evaluater(data_path)
+    score = evaluater.topn_map(ranking_mat)
     np.savetxt('score.txt', np.array([score]))

@@ -66,6 +66,7 @@ if __name__ == '__main__':
     lr_decay_every = params['lr_decay_every']
     lr_decay_rate = params['lr_decay_rate']
 
+    #data_dir = '../data_beauty_2core_es/test/bpr'
     data_dir = '../data_beauty_2core_es/test/bpr'
     dataset = AmazonDataset(data_dir)
     bpr = BPR(int(embedding_dim), len(dataset.user_list), len(dataset.item_list)).to(device)
