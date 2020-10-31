@@ -32,9 +32,9 @@ pandas.dataFrameを.csvで保存したディレクトリ
 
 
 ## 手法に関して
-https://amitness.com/toolbox/ とかの規制のライブラリを使った方がいい気がする...
+https://amitness.com/toolbox/ とかの既製のライブラリを使った方がいい気がする...
 
-* NFM_test
+* NFM<br>
     Neural Factorization Machine
     * `data/`<br>
     使ってない
