@@ -62,14 +62,14 @@ https://amitness.com/toolbox/ とかの既製のライブラリを使った方�
     * `test.py`<br>
     testをするスクリプト
     
-* BPR_test
+* BPR_test<br>
   Bayesian Personalized Ranking
 
-* PPR 
-  Bayesian Personalized Ranking
+* PPR<br> 
+Personalized Page Rank
 
-* KG_Embed
+* KG_Embed<br>
     knowledge graph embedding系
 
-* PROPOSED
+* PROPOSED<br>
   提案手法
